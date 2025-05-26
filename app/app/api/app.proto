@@ -401,51 +401,40 @@ message UserInfoRequest {
 message UserInfoReply {
 	string status = 11;
 
-	string one = 1; // 利润钱包
-	string two = 2;// 本金钱包
-	string three = 3; // 总认购
-	string four = 4; // 带释放
-	string fourOne = 5; // 已释放
-	string raw = 30;
+	// 我的节点
+	uint64 level = 6; // 级别
+	uint64 locationNum = 4; // 分享节点
+	string total = 5; // 总业绩
+	string max = 24;// 大区业绩
+	string min = 25;// 小区业绩
+	string inviteUserAddress = 15; // 推荐人
 
-	string myAddress = 14; // 我的地址
-	string inviteUserAddress = 15; // 我的直推人地址
-	uint64 level = 6; // 我的vip级别
+	// 我的收益
+	string buy = 1; // 节点
+	string amountGetSub = 2;// 待产出
+	string amountGet = 7; // 已产出
+	uint64 outNum = 8; // 出局次数
+	string location = 9; // 静态收益
+	string recommend = 10; // 直推收益
+	string recommendTwo = 14; // 直推加速
+	string team = 16; // 团队收益
+	string teamTwo = 17; // 平级收益
+	string all = 18; // 全网收益
 
-	double price = 7; // hb价格
-	string five = 8; // 推广奖池
-	string six = 9; // 绩效奖池
 
-	string seven = 10; // 直推激活奖励
 
-	double withdrawMin = 13; // 最大提现
-	double withdrawMax = 12; // 最小提现
+	string usdt = 21; // usdt余额
+	double withdrawRate = 22; // usdt提现手续费
+	double withdrawMin = 23; // usdt最小提现
 
-	string fiveOne = 21;// 静态奖励
-	string fiveTwo = 22;// 直推奖励
-	string fiveThree = 23;// 团队奖励
-	string fiveFour = 24;// 大区业绩
-	string fiveFive = 25;// 小区业绩
-	string fiveSix = 26;// 总业绩
-
-	repeated List list = 31; // 前三名 绩效
-	message List {
-		string address = 3; // 地址
-		string amount = 2; // 绩效
-		string reward = 1; // 奖励金额
-	}
-
-	repeated ListTwo listTwo = 32; // 前三名 推广
-	message ListTwo {
-		string address = 3; // 地址
-		uint64 num = 2; // 人数
-		string reward = 1; // 奖励金额
-	}
+	string raw = 31; // ispay余额
+	double withdrawRateTwo = 32; // ispay提现手续费
+	double withdrawMinTwo = 33; // ispay最小提现
 }
 
 message RewardListRequest {
 	uint64 page = 1; // 页数
-	uint64 reqType = 2; // 类型：1充值，2直推奖1代，3直推奖2代，4推荐奖，5团队奖，6推广奖，6绩效奖
+	uint64 reqType = 2; // 类型：1认购，2静态收益，3直推收益，4直推加速收益，5团代收益，6平级收益，7全网收益，8赠送ispay
 }
 
 message RewardListReply {
@@ -454,8 +443,10 @@ message RewardListReply {
 	repeated List list = 1;
 	message List {
 		string createdAt = 1; // 时间
-		string amount = 2; // 金额
-		string address = 3;
+		string amount = 2; // 数量usdt 1-7 需要展示
+		string amountTwo = 3; // 数量ispay 2-8需要展示
+		string address = 4; // 下级地址 3-6需要展示
+		uint64 num = 5; //  代数 4-6需要展示
 	}
 }
 
@@ -535,7 +526,10 @@ message OrderListReply {
 	message List {
 		string createdAt = 1; // 时间
 		string amount = 2; // 金额
-		uint64 status = 3;
+		string amountGet = 4; // 已释放
+		string amountLast = 5; // 待释放
+		string num = 6; // 倍率
+		uint64 status = 3; // 1收益中 2已出局
 	}
 }
 

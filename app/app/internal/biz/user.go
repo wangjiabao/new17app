@@ -27,7 +27,7 @@ type User struct {
 	Last                   uint64
 	Amount                 uint64
 	AmountBiw              uint64
-	OutRate                uint64
+	OutRate                int64
 	Total                  uint64
 	IsDelete               int64
 	RecommendLevel         int64
@@ -125,6 +125,7 @@ type UserBalance struct {
 	RecommendTotalFloat    float64
 	RecommendTotalFloatTwo float64
 	AreaTotalFloat         float64
+	AllFloat               float64
 	AreaTotalFloatTwo      float64
 	AreaTotalFloatThree    float64
 	LocationTotalFloat     float64
@@ -388,6 +389,7 @@ type UserRepo interface {
 	UpdateUserRewardAreaTwo(ctx context.Context, userId int64, amountUsdt float64, amountUsdtTotal float64, stop bool, level, i int64, address string) (int64, error)
 	GetUserById(ctx context.Context, Id int64) (*User, error)
 	GetBuyRecord(ctx context.Context, userId uint64, b *Pagination) ([]*BuyRecord, int64, error)
+	GetBuyRecordDoing(userId uint64) ([]*BuyRecord, error)
 	GetUserByAddresses(ctx context.Context, Addresses ...string) (map[string]*User, error)
 	GetUserByAddress(ctx context.Context, address string) (*User, error)
 	CreateUser(ctx context.Context, user *User) (*User, error)
@@ -619,38 +621,35 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		userRecommend         *UserRecommend
 		myUserRecommendUserId int64
 		inviteUserAddress     string
-		myRecommendUser       *User
 		configs               []*Config
 		userBalance           *UserBalance
-		bPrice                float64
 		withdrawMin           float64
-		withdrawMax           float64
-		allOne                float64
-		allTwo                float64
+		withdrawRate          float64
+		withdrawMinTwo        float64
+		withdrawRateTwo       float64
 		users                 []*User
 	)
 
 	// 配置
 	configs, err = uuc.configRepo.GetConfigByKeys(ctx,
-		"b_price",
-		"withdraw_amount_max",
-		"withdraw_amount_min", "all_one", "all_two",
+		"withdraw_rate",
+		"withdraw_amount_min",
+		"withdraw_rate_two",
+		"withdraw_amount_min_two",
 	)
 	if nil != configs {
 		for _, vConfig := range configs {
 			if "withdraw_amount_min" == vConfig.KeyName {
 				withdrawMin, _ = strconv.ParseFloat(vConfig.Value, 10)
 			}
-			if "withdraw_amount_max" == vConfig.KeyName {
-				withdrawMax, _ = strconv.ParseFloat(vConfig.Value, 10)
+			if "withdraw_rate" == vConfig.KeyName {
+				withdrawRate, _ = strconv.ParseFloat(vConfig.Value, 10)
 			}
-			if "b_price" == vConfig.KeyName {
-				bPrice, _ = strconv.ParseFloat(vConfig.Value, 10)
+			if "withdraw_amount_min_two" == vConfig.KeyName {
+				withdrawMinTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
 			}
-			if "all_one" == vConfig.KeyName {
-				allOne, _ = strconv.ParseFloat(vConfig.Value, 10)
-			} else if "all_two" == vConfig.KeyName {
-				allTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
+			if "withdraw_rate_two" == vConfig.KeyName {
+				withdrawRateTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
 			}
 		}
 	}
@@ -665,10 +664,10 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		usersMap[vUsers.ID] = vUsers
 	}
 
-	myUser, err = uuc.repo.GetUserById(ctx, user.ID)
-	if nil != err {
+	if _, ok := usersMap[user.ID]; !ok {
 		return nil, err
 	}
+	myUser = usersMap[user.ID]
 
 	if 1 == myUser.IsDelete {
 		return nil, nil
@@ -717,207 +716,10 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		if 2 <= len(tmpRecommendUserIds) {
 			myUserRecommendUserId, _ = strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-1], 10, 64) // 最后一位是直推人
 		}
-		myRecommendUser, err = uuc.repo.GetUserById(ctx, myUserRecommendUserId)
-		if nil != err {
-			return nil, err
+		if _, ok := usersMap[myUserRecommendUserId]; ok {
+			inviteUserAddress = usersMap[myUserRecommendUserId].Address
 		}
-		inviteUserAddress = myRecommendUser.Address
 	}
-	// 分红
-	//var (
-	//	userRewardsTwo []*Reward
-	//)
-
-	//listEth := make([]*v1.UserInfoReply_ListEthRecordTotal, 0)
-	//userRewardsTwo, err = uuc.ubRepo.GetUserRewardByUserId(ctx, myUser.ID)
-	//if nil != userRewardsTwo {
-	//	for _, vUserReward := range userRewardsTwo {
-	//		address := ""
-	//		if _, ok := usersMap[vUserReward.UserId]; ok {
-	//			address = usersMap[vUserReward.UserId].Address
-	//		}
-	//
-	//		listEth = append(listEth, &v1.UserInfoReply_ListEthRecordTotal{
-	//			Amount:    vUserReward.AmountNew,
-	//			Address:   address,
-	//			CreatedAt: vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//		})
-	//	}
-	//}
-
-	//num := float64(1)
-	//todayTotal := float64(0)
-	//if 1 == myUser.Last {
-	//	num = 1.5
-	//	todayTotal = myUser.AmountUsdt * level1
-	//} else if 2 == myUser.Last {
-	//	num = 1.8
-	//	todayTotal = myUser.AmountUsdt * level2
-	//} else if 3 == myUser.Last {
-	//	num = 2
-	//	todayTotal = myUser.AmountUsdt * level3
-	//} else if 4 == myUser.Last {
-	//	num = 2.3
-	//	todayTotal = myUser.AmountUsdt * level4
-	//} else if 5 == myUser.Last {
-	//	num = 2.6
-	//	todayTotal = myUser.AmountUsdt * level5
-	//} else if 6 == myUser.Last {
-	//	num = 3
-	//	todayTotal = myUser.AmountUsdt * level6
-	//}
-	//
-	//// 分红
-	//var (
-	//	userRewards []*Reward
-	//)
-	//
-	//listReward := make([]*v1.UserInfoReply_ListReward, 0)
-	//listOut := make([]*v1.UserInfoReply_ListOut, 0)
-	//if 0 < myUser.AmountUsdt {
-	//	listOut = append(listOut, &v1.UserInfoReply_ListOut{
-	//		Amount:    myUser.AmountUsdt,
-	//		Level:     num,
-	//		Status:    1,
-	//		AmountGet: myUser.AmountUsdtGet,
-	//		CreatedAt: myUser.UpdatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//	})
-	//}
-	//
-	//userRewards, err = uuc.ubRepo.GetUserRewardByUserId(ctx, myUser.ID)
-	//if nil != userRewards {
-	//	for _, vUserReward := range userRewards {
-	//		if "location" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNew,
-	//				RewardType: 1,
-	//			})
-	//		} else if "recommend" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNew,
-	//				RewardType: 2,
-	//			})
-	//		} else if "area" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNew,
-	//				RewardType: 3,
-	//			})
-	//		} else if "area_three" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNew,
-	//				RewardType: 4,
-	//			})
-	//		} else if "area_two" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNew,
-	//				RewardType: 5,
-	//			})
-	//		} else if "stake_reward" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNew,
-	//				RewardType: 6,
-	//			})
-	//		} else if "buy" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNewTwo,
-	//				AmountRaw:  vUserReward.AmountNew,
-	//				RewardType: 7,
-	//			})
-	//		} else if "exchange" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNewTwo,
-	//				AmountRaw:  vUserReward.AmountNew,
-	//				RewardType: 8,
-	//			})
-	//		} else if "to_amount" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRsdt: vUserReward.AmountNew,
-	//				Address:    vUserReward.Address,
-	//				RewardType: 9,
-	//			})
-	//		} else if "deposit" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRaw:  vUserReward.AmountNew,
-	//				RewardType: 10,
-	//			})
-	//		} else if "withdraw" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRaw:  vUserReward.AmountNew,
-	//				RewardType: 11,
-	//			})
-	//		} else if "stake" == vUserReward.Reason {
-	//			listReward = append(listReward, &v1.UserInfoReply_ListReward{
-	//				CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//				AmountRaw:  vUserReward.AmountNew,
-	//				RewardType: 12,
-	//			})
-	//		} else if "out" == vUserReward.Reason {
-	//			newAmountUsdt := vUserReward.AmountNew
-	//			numTmp := float64(1)
-	//			if 300 <= newAmountUsdt && newAmountUsdt < 500 {
-	//				numTmp = 1.5
-	//			} else if 500 <= newAmountUsdt && newAmountUsdt < 1000 {
-	//				numTmp = 1.8
-	//			} else if 1000 <= newAmountUsdt && newAmountUsdt < 5000 {
-	//				numTmp = 2
-	//			} else if 5000 <= newAmountUsdt && newAmountUsdt < 30000 {
-	//				numTmp = 2.3
-	//			} else if 30000 <= newAmountUsdt && newAmountUsdt < 100000 {
-	//				numTmp = 2.6
-	//			} else if 100000 <= newAmountUsdt {
-	//				numTmp = 3
-	//			} else {
-	//				continue
-	//			}
-	//
-	//			listOut = append(listOut, &v1.UserInfoReply_ListOut{
-	//				Amount:    vUserReward.AmountNew,
-	//				Level:     numTmp,
-	//				Status:    2,
-	//				AmountGet: vUserReward.AmountNew * numTmp,
-	//				CreatedAt: vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//			})
-	//		} else {
-	//			continue
-	//		}
-	//	}
-	//}
-	//
-	//var (
-	//	stakes []*Stake
-	//)
-	//stakes, err = uuc.ubRepo.GetStakeByUserId(ctx, myUser.ID)
-	//if nil != err {
-	//	return nil, err
-	//}
-	//
-	//listStake := make([]*v1.UserInfoReply_ListStake, 0)
-	//for _, v := range stakes {
-	//	if 2 <= v.Status {
-	//		continue
-	//	}
-	//
-	//	listStake = append(listStake, &v1.UserInfoReply_ListStake{
-	//		Id:        uint64(v.ID),
-	//		Amount:    v.Amount,
-	//		Day:       uint64(v.Day),
-	//		Reward:    v.Reward,
-	//		CreatedAt: v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-	//		Status:    uint64(v.Status),
-	//	})
-	//}
-	//
 
 	// 推荐人
 	var (
@@ -926,7 +728,6 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	)
 
 	myLowUser = make(map[int64][]*UserRecommend, 0)
-
 	userRecommends, err = uuc.urRepo.GetUserRecommends(ctx)
 	if nil != err {
 		return nil, err
@@ -956,187 +757,102 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	}
 
 	// 获取业绩
-	tmpAreaMax := float64(0)
-	tmpAreaMin := float64(0)
+	tmpAreaMax := uint64(0)
+	tmpAreaMin := uint64(0)
 	tmpMaxId := int64(0)
+	tmpRecommendNum := uint64(0)
 	for _, vMyLowUser := range myLowUser[myUser.ID] {
-		if _, ok := usersMap[vMyLowUser.UserId]; !ok {
+		if _, ok := usersMap[vMyLowUser.ID]; !ok {
 			continue
 		}
 
-		if tmpAreaMax < usersMap[vMyLowUser.UserId].MyTotalAmount+usersMap[vMyLowUser.UserId].AmountUsdt {
-			tmpAreaMax = usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdt
-			tmpMaxId = vMyLowUser.UserId
+		if usersMap[vMyLowUser.ID].Amount > 0 {
+			tmpRecommendNum += 1
+		}
+
+		if tmpAreaMax < uint64(usersMap[vMyLowUser.UserId].MyTotalAmount)+usersMap[vMyLowUser.UserId].Amount {
+			tmpAreaMax = uint64(usersMap[vMyLowUser.UserId].MyTotalAmount) + usersMap[vMyLowUser.UserId].Amount
+			tmpMaxId = vMyLowUser.ID
 		}
 	}
 
 	if 0 < tmpMaxId {
 		for _, vMyLowUser := range myLowUser[myUser.ID] {
-			if tmpMaxId != vMyLowUser.UserId {
-				tmpAreaMin += usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdt
+			if _, ok := usersMap[vMyLowUser.ID]; !ok {
+				continue
+			}
+
+			if tmpMaxId != vMyLowUser.ID {
+				tmpAreaMin += uint64(usersMap[vMyLowUser.UserId].MyTotalAmount) + usersMap[vMyLowUser.UserId].Amount
 			}
 		}
 	}
 
-	//
-	//recommendTotalGetSub := float64(0)
-	//if recommendTotal > recommendTotalGet {
-	//	recommendTotalGetSub = recommendTotal - recommendTotalGet
-	//}
-	//
-	//currentLevel := uint64(0)
-	//if 1000 <= tmpAreaMin && 5000 > tmpAreaMin {
-	//	currentLevel = 1
-	//} else if 5000 <= tmpAreaMin && 30000 > tmpAreaMin {
-	//	currentLevel = 2
-	//} else if 30000 <= tmpAreaMin && 100000 > tmpAreaMin {
-	//	currentLevel = 3
-	//} else if 100000 <= tmpAreaMin && 300000 > tmpAreaMin {
-	//	currentLevel = 4
-	//} else if 300000 <= tmpAreaMin && 1000000 > tmpAreaMin {
-	//	currentLevel = 5
-	//} else if 1000000 <= tmpAreaMin && 3000000 > tmpAreaMin {
-	//	currentLevel = 6
-	//} else if 3000000 <= tmpAreaMin && 10000000 > tmpAreaMin {
-	//	currentLevel = 7
-	//} else if 10000000 <= tmpAreaMin {
-	//	currentLevel = 8
-	//}
-	//
-	//if 0 < myUser.Vip {
-	//	currentLevel = uint64(myUser.Vip)
-	//}
-
-	four := float64(0)
-	if 1 == myUser.Last {
-		four = 1.5*myUser.AmountUsdt - myUser.AmountUsdtGet
-	} else if 2 == myUser.Last {
-		four = 2*myUser.AmountUsdt - myUser.AmountUsdtGet
-	} else if 3 == myUser.Last {
-		four = 2.5*myUser.AmountUsdt - myUser.AmountUsdtGet
-	} else if 4 == myUser.Last {
-		four = 3*myUser.AmountUsdt - myUser.AmountUsdtGet
-	} else if 5 == myUser.Last {
-		four = 3.5*myUser.AmountUsdt - myUser.AmountUsdtGet
+	tmpLevel := uint64(0)
+	if 1000000 <= tmpAreaMin {
+		tmpLevel = 5
+	} else if 500000 <= tmpAreaMin {
+		tmpLevel = 4
+	} else if 150000 <= tmpAreaMin {
+		tmpLevel = 3
+	} else if 50000 <= tmpAreaMin {
+		tmpLevel = 2
+	} else if 10000 <= tmpAreaMin {
+		tmpLevel = 1
 	}
 
-	tmpVip := uint64(0)
 	if 0 < myUser.VipAdmin {
-		tmpVip = uint64(myUser.VipAdmin)
-	} else {
-		tmpVip = uint64(myUser.Vip)
+		tmpLevel = uint64(myUser.VipAdmin)
 	}
 
 	var (
-		total *Total
+		buyRecord    []*BuyRecord
+		tmpBuy       float64
+		tmpAmountGet float64
+		tmpSubAmount float64
 	)
-	total, err = uuc.ubRepo.GetTotal(ctx)
-	if nil == total {
-		fmt.Println("今日分红错误用户获取失败，total")
-		return nil, nil
-	}
-
-	var (
-		usersOrderAmountBiw []*User
-	)
-	usersOrderAmountBiw, err = uuc.repo.GetAllUsersOrderAmountBiw(ctx)
+	buyRecord, err = uuc.repo.GetBuyRecordDoing(uint64(myUser.ID))
 	if nil != err {
-		fmt.Println("今日分红错误用户获取失败，total，推荐人数")
-		return nil, nil
+		return nil, err
 	}
 
-	listTwo := make([]*v1.UserInfoReply_ListTwo, 0)
-	for k, v := range usersOrderAmountBiw {
-		if 0 >= v.AmountBiw {
-			continue
-		}
+	for _, vBuyRecord := range buyRecord {
+		tmpBuy += vBuyRecord.Amount
 
-		if 0 == k {
-			listTwo = append(listTwo, &v1.UserInfoReply_ListTwo{
-				Address: v.Address,
-				Num:     v.AmountBiw,
-				Reward:  fmt.Sprintf("%.2f", total.One*allOne*0.5),
-			})
-		} else if 1 == k {
-			listTwo = append(listTwo, &v1.UserInfoReply_ListTwo{
-				Address: v.Address,
-				Num:     v.AmountBiw,
-				Reward:  fmt.Sprintf("%.2f", total.One*allOne*0.3),
-			})
-		} else if 2 == k {
-			listTwo = append(listTwo, &v1.UserInfoReply_ListTwo{
-				Address: v.Address,
-				Num:     v.AmountBiw,
-				Reward:  fmt.Sprintf("%.2f", total.One*allOne*0.2),
-			})
+		one := vBuyRecord.AmountGet
+		if vBuyRecord.Amount*2.5 <= vBuyRecord.AmountGet {
+			one = vBuyRecord.Amount * 2.5
 		} else {
-			break
-		}
-	}
-
-	var (
-		usersOrderRecommendOrder []*User
-	)
-	usersOrderRecommendOrder, err = uuc.repo.GetAllUsersRecommendOrder(ctx)
-	if nil != err {
-		fmt.Println("今日分红错误用户获取失败，total，推荐1人数")
-		return nil, nil
-	}
-
-	list := make([]*v1.UserInfoReply_List, 0)
-	for k, v := range usersOrderRecommendOrder {
-		if 0 >= v.AmountRecommendUsdtGet {
-			continue
+			tmpSubAmount += vBuyRecord.Amount*2.5 - one
 		}
 
-		if 0 == k {
-			list = append(list, &v1.UserInfoReply_List{
-				Address: v.Address,
-				Amount:  fmt.Sprintf("%.2f", v.AmountRecommendUsdtGet),
-				Reward:  fmt.Sprintf("%.2f", total.One*allTwo*0.5),
-			})
-		} else if 1 == k {
-			list = append(list, &v1.UserInfoReply_List{
-				Address: v.Address,
-				Amount:  fmt.Sprintf("%.2f", v.AmountRecommendUsdtGet),
-				Reward:  fmt.Sprintf("%.2f", total.One*allTwo*0.3),
-			})
-		} else if 2 == k {
-			list = append(list, &v1.UserInfoReply_List{
-				Address: v.Address,
-				Amount:  fmt.Sprintf("%.2f", v.AmountRecommendUsdtGet),
-				Reward:  fmt.Sprintf("%.2f", total.One*allTwo*0.2),
-			})
-		} else {
-			break
-		}
+		tmpAmountGet += one
 	}
 
 	return &v1.UserInfoReply{
-		Raw:               fmt.Sprintf("%.2f", userBalance.BalanceRawFloat),
-		FourOne:           fmt.Sprintf("%.2f", myUser.AmountUsdtGet),
-		FiveOne:           fmt.Sprintf("%.2f", userBalance.LocationTotalFloat),
-		FiveTwo:           fmt.Sprintf("%.2f", userBalance.RecommendTotalFloat+userBalance.RecommendTotalFloatTwo),
-		FiveThree:         fmt.Sprintf("%.2f", userBalance.AreaTotalFloat),
-		FiveFour:          fmt.Sprintf("%.2f", tmpAreaMax),
-		FiveFive:          fmt.Sprintf("%.2f", tmpAreaMin),
-		FiveSix:           fmt.Sprintf("%.2f", myUser.MyTotalAmount),
 		Status:            "ok",
-		One:               fmt.Sprintf("%.2f", userBalance.BalanceUsdtFloat),
-		Two:               fmt.Sprintf("%.2f", float64(myUser.Amount)),
-		Three:             fmt.Sprintf("%.2f", myUser.AmountUsdt),
-		Four:              fmt.Sprintf("%.2f", four),
-		MyAddress:         myUser.Address,
+		Level:             tmpLevel,
+		LocationNum:       tmpRecommendNum,
+		Total:             fmt.Sprintf("%d", uint64(myUser.MyTotalAmount)),
+		Max:               fmt.Sprintf("%d", tmpAreaMax),
+		Min:               fmt.Sprintf("%d", tmpAreaMin),
 		InviteUserAddress: inviteUserAddress,
-		Level:             tmpVip,
-		Price:             bPrice,
-		Five:              fmt.Sprintf("%.2f", total.One*allOne),
-		Six:               fmt.Sprintf("%.2f", total.One*allTwo),
-		Seven:             fmt.Sprintf("%.2f", float64(myUser.RecommendUserH)),
+		Buy:               fmt.Sprintf("%.2f", tmpBuy),
+		AmountGetSub:      fmt.Sprintf("%.2f", tmpSubAmount),
+		AmountGet:         fmt.Sprintf("%.2f", tmpAmountGet),
+		OutNum:            uint64(myUser.OutRate),
+		Location:          fmt.Sprintf("%.2f", userBalance.LocationTotalFloat),
+		Recommend:         fmt.Sprintf("%.2f", userBalance.RecommendTotalFloat),
+		RecommendTwo:      fmt.Sprintf("%.2f", userBalance.RecommendTotalFloatTwo),
+		Team:              fmt.Sprintf("%.2f", userBalance.AreaTotalFloat),
+		TeamTwo:           fmt.Sprintf("%.2f", userBalance.AreaTotalFloatTwo),
+		All:               fmt.Sprintf("%.2f", userBalance.AllFloat),
+		Usdt:              fmt.Sprintf("%.2f", userBalance.BalanceUsdtFloat),
+		WithdrawRate:      withdrawRate,
 		WithdrawMin:       withdrawMin,
-		WithdrawMax:       withdrawMax,
-		List:              list,
-		ListTwo:           listTwo,
+		Raw:               fmt.Sprintf("%.2f", userBalance.BalanceRawFloat),
+		WithdrawRateTwo:   withdrawRateTwo,
+		WithdrawMinTwo:    withdrawMinTwo,
 	}, nil
 }
 
@@ -1203,7 +919,7 @@ func (uuc *UserUseCase) UserRecommend(ctx context.Context, req *v1.RecommendList
 		recommendTotal++
 		res = append(res, &v1.RecommendListReply_List{
 			Address: usersMap[vMyUserRecommend.UserId].Address,
-			Amount:  fmt.Sprintf("%.2f", usersMap[vMyUserRecommend.UserId].MyTotalAmount+usersMap[vMyUserRecommend.UserId].AmountUsdt),
+			Amount:  fmt.Sprintf("%d", uint64(usersMap[vMyUserRecommend.UserId].MyTotalAmount)+usersMap[vMyUserRecommend.UserId].Amount),
 		})
 	}
 
@@ -1621,33 +1337,21 @@ func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListReques
 	)
 
 	if 1 == req.ReqType {
-		reason = "deposit"
+		reason = "buy"
 	} else if 2 == req.ReqType {
-		reason = "recommend"
+		reason = "location"
 	} else if 3 == req.ReqType {
-		reason = "recommend_two"
+		reason = "recommend"
 	} else if 4 == req.ReqType {
-		reason = "recommend_b"
+		reason = "recommend_two"
 	} else if 5 == req.ReqType {
 		reason = "area"
 	} else if 6 == req.ReqType {
-		reason = "total_one"
+		reason = "area_two"
 	} else if 7 == req.ReqType {
-		reason = "total_two"
+		reason = "all"
 	} else if 8 == req.ReqType {
-		reason = "location"
-	} else if 9 == req.ReqType {
-		reason = "set_day"
-	} else if 10 == req.ReqType {
 		reason = "buy"
-	} else if 11 == req.ReqType {
-		reason = "recommend_h" // 赠送hb矿机
-	} else if 12 == req.ReqType {
-		reason = "exchange"
-	} else if 13 == req.ReqType {
-		reason = "withdraw"
-	} else if 14 == req.ReqType {
-		reason = "recommend_three"
 	}
 
 	userRewards, err, count = uuc.ubRepo.GetUserRewardByUserIdPage(ctx, &Pagination{
@@ -1667,6 +1371,8 @@ func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListReques
 			CreatedAt: vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Amount:    fmt.Sprintf("%.4f", vUserReward.AmountNew),
 			Address:   vUserReward.Address,
+			AmountTwo: fmt.Sprintf("%.4f", vUserReward.AmountNewTwo),
+			Num:       0,
 		})
 	}
 
@@ -1878,24 +1584,23 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 		}, nil
 	}
 
-	//tmpNum := float64(0)
-	//if 1 == myUser.Last {
-	//	tmpNum = 1.5
-	//} else if 2 == myUser.Last {
-	//	tmpNum = 1.8
-	//} else if 3 == myUser.Last {
-	//	tmpNum = 2.0
-	//} else if 4 == myUser.Last {
-	//	tmpNum = 2.5
-	//} else if 5 == myUser.Last {
-	//	tmpNum = 3
-	//}
-
+	num := 2.5
 	for _, vBuyRecord := range buyRecord {
+		tmpAmountGet := vBuyRecord.AmountGet
+		tmpAmountLast := float64(0)
+		if vBuyRecord.AmountGet >= vBuyRecord.Amount*num {
+			tmpAmountGet = vBuyRecord.Amount * num
+		} else {
+			tmpAmountLast = vBuyRecord.Amount*num - vBuyRecord.AmountGet
+		}
+
 		res = append(res, &v1.OrderListReply_List{
-			CreatedAt: vBuyRecord.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-			Amount:    fmt.Sprintf("%.2f", vBuyRecord.Amount),
-			Status:    uint64(vBuyRecord.Status),
+			CreatedAt:  vBuyRecord.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Amount:     fmt.Sprintf("%.2f", vBuyRecord.Amount),
+			Status:     uint64(vBuyRecord.Status),
+			AmountGet:  fmt.Sprintf("%.2f", tmpAmountGet),
+			AmountLast: fmt.Sprintf("%.2f", tmpAmountLast),
+			Num:        "2.5",
 		})
 	}
 
@@ -2121,6 +1826,7 @@ func (uuc *UserUseCase) AmountTo(ctx context.Context, req *v1.AmountToRequest, u
 }
 
 func (uuc *UserUseCase) Buy(ctx context.Context, req *v1.BuyRequest, user *User) (*v1.BuyReply, error) {
+	return nil, nil
 	var (
 		amount = req.SendBody.Amount
 		//configs  []*Config

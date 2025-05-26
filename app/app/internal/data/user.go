@@ -161,6 +161,7 @@ type UserBalance struct {
 	FourTotal              int64     `gorm:"type:bigint"`
 	BalanceC               int64     `gorm:"type:bigint"`
 	AreaTotalFloat         float64   `gorm:"type:decimal(65,20);not null"`
+	AllFloat               float64   `gorm:"type:decimal(65,20);not null"`
 	AreaTotalFloatTwo      float64   `gorm:"type:decimal(65,20);not null"`
 	AreaTotalFloatThree    float64   `gorm:"type:decimal(65,20);not null"`
 	RecommendTotalFloat    float64   `gorm:"type:decimal(65,20);not null"`
@@ -319,7 +320,7 @@ func (u *UserRepo) GetUserByAddress(ctx context.Context, address string) (*biz.U
 		IsDelete:   user.IsDelete,
 		AmountUsdt: user.AmountUsdt,
 		Amount:     user.Amount,
-		OutRate:    uint64(user.OutRate),
+		OutRate:    user.OutRate,
 		Lock:       user.Lock,
 		Vip:        user.Vip,
 		VipAdmin:   user.VipAdmin,
@@ -774,6 +775,39 @@ func (u *UserRepo) GetBuyRecord(ctx context.Context, userId uint64, b *biz.Pagin
 	}
 
 	return res, count, nil
+}
+
+// GetBuyRecordDoing .
+func (u *UserRepo) GetBuyRecordDoing(userId uint64) ([]*biz.BuyRecord, error) {
+	res := make([]*biz.BuyRecord, 0)
+
+	var (
+		buyRecord []*BuyRecord
+	)
+
+	instance := u.data.db.Table("buy_record").Where("user_id=?", userId).Where("status=?", 1)
+	if err := instance.Order("id desc").Find(&buyRecord).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, nil
+		}
+
+		return nil, errors.New(500, "buy_record ERROR", err.Error())
+	}
+
+	for _, v := range buyRecord {
+		res = append(res, &biz.BuyRecord{
+			ID:          v.ID,
+			UserId:      v.UserId,
+			Status:      v.Status,
+			Amount:      v.Amount,
+			AmountGet:   v.AmountGet,
+			CreatedAt:   v.CreatedAt,
+			UpdatedAt:   v.UpdatedAt,
+			LastUpdated: v.LastUpdated,
+		})
+	}
+
+	return res, nil
 }
 
 // UpdateUserNewTwoNew .
@@ -1232,7 +1266,10 @@ func (u *UserRepo) GetAllUsers(ctx context.Context) ([]*biz.User, error) {
 			RecommendLevel:         item.RecommendLevel,
 			Last:                   item.Last,
 			Vip:                    item.Vip,
+			VipAdmin:               item.VipAdmin,
 			LockReward:             item.LockReward,
+			IsDelete:               item.IsDelete,
+			OutRate:                item.OutRate,
 		})
 	}
 	return res, nil
@@ -1828,6 +1865,7 @@ func (ub UserBalanceRepo) GetUserBalance(ctx context.Context, userId int64) (*bi
 		RecommendTotalFloat:    userBalance.RecommendTotalFloat,
 		RecommendTotalFloatTwo: userBalance.RecommendTotalFloatTwo,
 		LocationTotalFloat:     userBalance.LocationTotalFloat,
+		AllFloat:               userBalance.AllFloat,
 		BalanceRawFloat:        userBalance.BalanceRawFloat,
 		BalanceUsdtFloat:       userBalance.BalanceUsdtFloat,
 		BalanceKsdtFloat:       userBalance.BalanceKsdtFloat,
@@ -3071,7 +3109,7 @@ func (ub *UserBalanceRepo) GetWithdrawByUserId2(ctx context.Context, userId int6
 func (ub *UserBalanceRepo) GetWithdrawByUserId(ctx context.Context, userId int64, b *biz.Pagination) ([]*biz.Withdraw, error) {
 	var withdraws []*Withdraw
 	res := make([]*biz.Withdraw, 0)
-	if err := ub.data.db.Where("user_id=?", userId).Scopes(Paginate(b.PageNum, b.PageSize)).Table("withdraw").Find(&withdraws).Error; err != nil {
+	if err := ub.data.db.Where("user_id=?", userId).Where("coin_type=?", "USDT").Scopes(Paginate(b.PageNum, b.PageSize)).Table("withdraw").Find(&withdraws).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return res, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
 		}

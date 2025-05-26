@@ -865,6 +865,12 @@ components:
                     type: string
                 amount:
                     type: string
+                amountGet:
+                    type: string
+                amountLast:
+                    type: string
+                num:
+                    type: string
                 status:
                     type: string
         PasswordChangeReply:
@@ -943,7 +949,11 @@ components:
                     type: string
                 amount:
                     type: string
+                amountTwo:
+                    type: string
                 address:
+                    type: string
+                num:
                     type: string
         SetBalanceRewardReply:
             type: object
@@ -1101,77 +1111,56 @@ components:
             properties:
                 status:
                     type: string
-                one:
+                level:
                     type: string
-                two:
+                    description: 我的节点
+                locationNum:
                     type: string
-                three:
+                total:
                     type: string
-                four:
+                max:
                     type: string
-                fourOne:
-                    type: string
-                raw:
-                    type: string
-                myAddress:
+                min:
                     type: string
                 inviteUserAddress:
                     type: string
-                level:
+                buy:
                     type: string
-                price:
+                    description: 我的收益
+                amountGetSub:
+                    type: string
+                amountGet:
+                    type: string
+                outNum:
+                    type: string
+                location:
+                    type: string
+                recommend:
+                    type: string
+                recommendTwo:
+                    type: string
+                team:
+                    type: string
+                teamTwo:
+                    type: string
+                all:
+                    type: string
+                usdt:
+                    type: string
+                withdrawRate:
                     type: number
                     format: double
-                five:
-                    type: string
-                six:
-                    type: string
-                seven:
-                    type: string
                 withdrawMin:
                     type: number
                     format: double
-                withdrawMax:
+                raw:
+                    type: string
+                withdrawRateTwo:
                     type: number
                     format: double
-                fiveOne:
-                    type: string
-                fiveTwo:
-                    type: string
-                fiveThree:
-                    type: string
-                fiveFour:
-                    type: string
-                fiveFive:
-                    type: string
-                fiveSix:
-                    type: string
-                list:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/UserInfoReply_List'
-                listTwo:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/UserInfoReply_ListTwo'
-        UserInfoReply_List:
-            type: object
-            properties:
-                address:
-                    type: string
-                amount:
-                    type: string
-                reward:
-                    type: string
-        UserInfoReply_ListTwo:
-            type: object
-            properties:
-                address:
-                    type: string
-                num:
-                    type: string
-                reward:
-                    type: string
+                withdrawMinTwo:
+                    type: number
+                    format: double
         WithdrawListReply:
             type: object
             properties:
