@@ -8,7 +8,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/selector"
-	jwt2 "github.com/golang-jwt/jwt/v4"
+	jwt2 "github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/handlers"
 
 	"github.com/go-kratos/kratos/v2/log"
