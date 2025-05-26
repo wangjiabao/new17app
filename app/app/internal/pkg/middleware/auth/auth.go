@@ -2,14 +2,14 @@ package auth
 
 import (
 	"errors"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type CustomClaims struct {
 	UserId   int64
 	Password string
 	UserType string
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // CreateToken generate token

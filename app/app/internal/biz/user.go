@@ -1165,13 +1165,13 @@ func (uuc *UserUseCase) UserRecommend(ctx context.Context, req *v1.RecommendList
 		return nil, err
 	}
 
-	var (
-		totalNum int64
-	)
-	totalNum, err = uuc.urRepo.GetUserRecommendLikeCodeSum(ctx, userRecommend.RecommendCode+"D"+strconv.FormatInt(user.ID, 10))
-	if nil != err {
-		return nil, err
-	}
+	//var (
+	//	totalNum int64
+	//)
+	//totalNum, err = uuc.urRepo.GetUserRecommendLikeCodeSum(ctx, userRecommend.RecommendCode+"D"+strconv.FormatInt(user.ID, 10))
+	//if nil != err {
+	//	return nil, err
+	//}
 
 	tmpUserIds := make([]int64, 0)
 	for _, vMyUserRecommend := range myUserRecommend {
@@ -1202,23 +1202,13 @@ func (uuc *UserUseCase) UserRecommend(ctx context.Context, req *v1.RecommendList
 
 		recommendTotal++
 		res = append(res, &v1.RecommendListReply_List{
-			Address:   usersMap[vMyUserRecommend.UserId].Address,
-			Amount:    fmt.Sprintf("%.2f", usersMap[vMyUserRecommend.UserId].MyTotalAmount+usersMap[vMyUserRecommend.UserId].AmountUsdt),
-			CreatedAt: vMyUserRecommend.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Address: usersMap[vMyUserRecommend.UserId].Address,
+			Amount:  fmt.Sprintf("%.2f", usersMap[vMyUserRecommend.UserId].MyTotalAmount+usersMap[vMyUserRecommend.UserId].AmountUsdt),
 		})
 	}
 
-	tmpVip := uint64(user.Vip)
-	if 0 < user.VipAdmin {
-		tmpVip = uint64(user.VipAdmin)
-	}
-
 	return &v1.RecommendListReply{
-		Level:        tmpVip,
-		TotalNum:     recommendTotal,
-		TotalTeamNum: uint64(totalNum),
-		TotalAmount:  user.MyTotalAmount,
-		Recommends:   res,
+		Recommends: res,
 	}, nil
 }
 

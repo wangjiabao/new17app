@@ -571,15 +571,11 @@ message RecommendListRequest {
 
 message RecommendListReply {
 	string status = 6;
-	uint64 level = 5; // 等级
-	uint64 totalNum = 2; // 直推人数
-	uint64 totalTeamNum = 3; // 团队总人数
-	double totalAmount = 4; // 团队总业绩
+
 	repeated List recommends = 1;
 	message List {
-		string address = 1;
-		string amount = 2;
-		string createdAt = 3;
+		string address = 1; // 地址
+		string amount = 2; // 业绩
 	}
 }
 

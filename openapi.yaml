@@ -882,15 +882,6 @@ components:
             properties:
                 status:
                     type: string
-                level:
-                    type: string
-                totalNum:
-                    type: string
-                totalTeamNum:
-                    type: string
-                totalAmount:
-                    type: number
-                    format: double
                 recommends:
                     type: array
                     items:
@@ -901,8 +892,6 @@ components:
                 address:
                     type: string
                 amount:
-                    type: string
-                createdAt:
                     type: string
         RecommendRewardListReply:
             type: object

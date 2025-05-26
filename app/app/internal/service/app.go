@@ -19,7 +19,7 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
-	jwt2 "github.com/golang-jwt/jwt/v4"
+	jwt2 "github.com/golang-jwt/jwt/v5"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -151,10 +151,10 @@ func (a *AppService) EthAuthorize(ctx context.Context, req *v1.EthAuthorizeReque
 		UserId:   user.ID,
 		UserType: "user",
 		Password: password,
-		StandardClaims: jwt2.StandardClaims{
-			NotBefore: time.Now().Unix(),              // 签名的生效时间
-			ExpiresAt: time.Now().Unix() + 60*60*24*7, // 7天过期
-			Issuer:    "DHB",
+		RegisteredClaims: jwt2.RegisteredClaims{
+			NotBefore: jwt2.NewNumericDate(time.Now()),                      // 签名的生效时间
+			ExpiresAt: jwt2.NewNumericDate(time.Now().Add(100 * time.Hour)), // 2天过期
+			Issuer:    "user",
 		},
 	}
 	token, err := auth.CreateToken(claims, a.ca.JwtKey)
