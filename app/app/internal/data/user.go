@@ -318,6 +318,7 @@ func (u *UserRepo) GetUserByAddress(ctx context.Context, address string) (*biz.U
 		Password:   user.Password,
 		IsDelete:   user.IsDelete,
 		AmountUsdt: user.AmountUsdt,
+		Amount:     user.Amount,
 		OutRate:    uint64(user.OutRate),
 		Lock:       user.Lock,
 		Vip:        user.Vip,
