@@ -454,11 +454,11 @@ func (uuc *UserUseCase) GetExistUserByAddressOrCreate(ctx context.Context, u *Us
 				return nil, errors.New(500, "USER_ERROR", "无效的推荐码1"), "无效的推荐码"
 			}
 
-			if 0 >= userRecommend.Amount {
-				if 0 >= userRecommend.OutRate {
-					return nil, errors.New(500, "USER_ERROR", "推荐人未激活"), "推荐人未激活"
-				}
-			}
+			//if 0 >= userRecommend.Amount {
+			//	if 0 >= userRecommend.OutRate {
+			//		return nil, errors.New(500, "USER_ERROR", "推荐人未激活"), "推荐人未激活"
+			//	}
+			//}
 
 			// 查询推荐人的相关信息
 			recommendUser, err = uuc.urRepo.GetUserRecommendByUserId(ctx, userRecommend.ID)
