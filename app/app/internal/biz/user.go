@@ -865,20 +865,34 @@ func (uuc *UserUseCase) UserRecommend(ctx context.Context, req *v1.RecommendList
 		err             error
 	)
 
+	res := make([]*v1.RecommendListReply_List, 0)
+
+	if 0 >= len(req.Address) {
+		return &v1.RecommendListReply{
+			Recommends: res,
+		}, nil
+	}
+
 	user, _ = uuc.repo.GetUserByAddress(ctx, req.Address)
 	if nil == user {
-		return nil, err
+		return &v1.RecommendListReply{
+			Recommends: res,
+		}, nil
 	}
 
 	// 推荐
 	userRecommend, err = uuc.urRepo.GetUserRecommendByUserId(ctx, user.ID)
 	if nil == userRecommend {
-		return nil, err
+		return &v1.RecommendListReply{
+			Recommends: res,
+		}, nil
 	}
 
 	myUserRecommend, err = uuc.urRepo.GetUserRecommendByCode(ctx, userRecommend.RecommendCode+"D"+strconv.FormatInt(user.ID, 10))
 	if nil == myUserRecommend || nil != err {
-		return nil, err
+		return &v1.RecommendListReply{
+			Recommends: res,
+		}, nil
 	}
 
 	//var (
@@ -894,7 +908,9 @@ func (uuc *UserUseCase) UserRecommend(ctx context.Context, req *v1.RecommendList
 		tmpUserIds = append(tmpUserIds, vMyUserRecommend.UserId)
 	}
 	if 0 >= len(tmpUserIds) {
-		return nil, err
+		return &v1.RecommendListReply{
+			Recommends: res,
+		}, nil
 	}
 
 	var (
@@ -903,14 +919,17 @@ func (uuc *UserUseCase) UserRecommend(ctx context.Context, req *v1.RecommendList
 
 	usersMap, err = uuc.repo.GetUserByUserIdsTwo(ctx, tmpUserIds)
 	if nil == usersMap || nil != err {
-		return nil, err
+		return &v1.RecommendListReply{
+			Recommends: res,
+		}, nil
 	}
 
 	if 0 >= len(usersMap) {
-		return nil, err
+		return &v1.RecommendListReply{
+			Recommends: res,
+		}, nil
 	}
 
-	res := make([]*v1.RecommendListReply_List, 0)
 	for _, vMyUserRecommend := range myUserRecommend {
 		if _, ok := usersMap[vMyUserRecommend.UserId]; !ok {
 			continue
