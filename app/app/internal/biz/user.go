@@ -789,7 +789,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	}
 
 	tmpLevel := uint64(0)
-	if 1000000 <= tmpAreaMin {
+	if 1500000 <= tmpAreaMin {
 		tmpLevel = 5
 	} else if 500000 <= tmpAreaMin {
 		tmpLevel = 4
