@@ -1372,7 +1372,7 @@ func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListReques
 			Amount:    fmt.Sprintf("%.4f", vUserReward.AmountNew),
 			Address:   vUserReward.Address,
 			AmountTwo: fmt.Sprintf("%.4f", vUserReward.AmountNewTwo),
-			Num:       0,
+			Num:       uint64(vUserReward.TypeRecordId),
 		})
 	}
 
