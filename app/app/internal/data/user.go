@@ -2496,7 +2496,7 @@ func (ub *UserBalanceRepo) WithdrawISPAY(ctx context.Context, userId int64, amou
 	userBalanceRecode.Balance = userBalance.BalanceUsdt
 	userBalanceRecode.UserId = userBalance.UserId
 	userBalanceRecode.Type = "withdraw"
-	userBalanceRecode.CoinType = "ISPAY"
+	userBalanceRecode.CoinType = "RAW"
 	userBalanceRecode.AmountNew = amount
 	err = ub.data.DB(ctx).Table("user_balance_record").Create(&userBalanceRecode).Error
 	if err != nil {

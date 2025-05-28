@@ -1508,7 +1508,7 @@ func (uuc *UserUseCase) WithdrawList(ctx context.Context, req *v1.WithdrawListRe
 
 	coinType := "USDT"
 	if 2 == req.CoinType {
-		coinType = "ISPAY"
+		coinType = "RAW"
 	}
 
 	withdraws, err = uuc.ubRepo.GetWithdrawByUserId(ctx, user.ID, coinType, &Pagination{
@@ -2624,7 +2624,7 @@ func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, u
 			if nil != err {
 				return err
 			}
-			_, err = uuc.ubRepo.GreateWithdraw(ctx, user.ID, amountFloatSubFee, amountFloat, "ISPAY", user.Address)
+			_, err = uuc.ubRepo.GreateWithdraw(ctx, user.ID, amountFloatSubFee, amountFloat, "RAW", user.Address)
 			if nil != err {
 				return err
 			}
