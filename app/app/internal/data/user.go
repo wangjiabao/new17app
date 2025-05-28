@@ -1486,6 +1486,7 @@ func (ur *UserRecommendRepo) GetUserRecommends(ctx context.Context) ([]*biz.User
 
 	for _, userRecommend := range userRecommends {
 		res = append(res, &biz.UserRecommend{
+			ID:            userRecommend.ID,
 			UserId:        userRecommend.UserId,
 			RecommendCode: userRecommend.RecommendCode,
 			Total:         userRecommend.Total,
