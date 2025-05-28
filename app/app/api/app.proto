@@ -503,6 +503,7 @@ message SetTodayListReply {
 
 message WithdrawListRequest {
 	uint64 page = 1; // 页数
+	uint64 coinType = 2;
 }
 
 message WithdrawListReply {
@@ -592,6 +593,7 @@ message WithdrawRequest {
 	message SendBody{
 		uint64 amount = 1;
 		string sign = 4;
+		uint64 coinType = 2;
 	}
 
 	SendBody send_body = 1;

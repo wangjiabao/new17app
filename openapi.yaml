@@ -710,6 +710,10 @@ paths:
                   in: query
                   schema:
                     type: string
+                - name: coinType
+                  in: query
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -1190,6 +1194,8 @@ components:
                 amount:
                     type: string
                 sign:
+                    type: string
+                coinType:
                     type: string
 tags:
     - name: App

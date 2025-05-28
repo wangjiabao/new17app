@@ -2477,6 +2477,35 @@ func (ub *UserBalanceRepo) ToAddressAmountRaw(ctx context.Context, userId int64,
 	return nil
 }
 
+// WithdrawISPAY .
+func (ub *UserBalanceRepo) WithdrawISPAY(ctx context.Context, userId int64, amount float64) error {
+	var err error
+	if res := ub.data.DB(ctx).Table("user_balance").
+		Where("user_id=? and balance_raw_float>=?", userId, amount).
+		Updates(map[string]interface{}{"balance_raw_float": gorm.Expr("balance_raw_float - ?", amount)}); 0 == res.RowsAffected || nil != res.Error {
+		return errors.NotFound("user balance err", "user balance error")
+	}
+
+	var userBalance UserBalance
+	err = ub.data.DB(ctx).Where(&UserBalance{UserId: userId}).Table("user_balance").First(&userBalance).Error
+	if err != nil {
+		return err
+	}
+
+	var userBalanceRecode UserBalanceRecord
+	userBalanceRecode.Balance = userBalance.BalanceUsdt
+	userBalanceRecode.UserId = userBalance.UserId
+	userBalanceRecode.Type = "withdraw"
+	userBalanceRecode.CoinType = "ISPAY"
+	userBalanceRecode.AmountNew = amount
+	err = ub.data.DB(ctx).Table("user_balance_record").Create(&userBalanceRecode).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // WithdrawUsdt2 .
 func (ub *UserBalanceRepo) WithdrawUsdt2(ctx context.Context, userId int64, amount float64) error {
 	var err error
@@ -3108,10 +3137,10 @@ func (ub *UserBalanceRepo) GetWithdrawByUserId2(ctx context.Context, userId int6
 }
 
 // GetWithdrawByUserId .
-func (ub *UserBalanceRepo) GetWithdrawByUserId(ctx context.Context, userId int64, b *biz.Pagination) ([]*biz.Withdraw, error) {
+func (ub *UserBalanceRepo) GetWithdrawByUserId(ctx context.Context, userId int64, coinType string, b *biz.Pagination) ([]*biz.Withdraw, error) {
 	var withdraws []*Withdraw
 	res := make([]*biz.Withdraw, 0)
-	if err := ub.data.db.Where("user_id=?", userId).Where("type=?", "USDT").Scopes(Paginate(b.PageNum, b.PageSize)).Table("withdraw").Find(&withdraws).Error; err != nil {
+	if err := ub.data.db.Where("user_id=?", userId).Where("type=?", coinType).Scopes(Paginate(b.PageNum, b.PageSize)).Table("withdraw").Find(&withdraws).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return res, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
 		}

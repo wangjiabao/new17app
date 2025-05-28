@@ -295,6 +295,7 @@ type UserBalanceRepo interface {
 	GreateWithdraw(ctx context.Context, userId int64, relAmount float64, amount float64, coinType string, address string) (*Withdraw, error)
 	WithdrawUsdt(ctx context.Context, userId int64, amount int64, tmpRecommendUserIdsInt []int64) error
 	WithdrawUsdt2(ctx context.Context, userId int64, amount float64) error
+	WithdrawISPAY(ctx context.Context, userId int64, amount float64) error
 	ToAddressAmountUsdt(ctx context.Context, userId int64, toUserId int64, amount float64, address string) error
 	ToAddressAmountKsdt(ctx context.Context, userId int64, toUserId int64, amount float64, address string) error
 	ToAddressAmountRaw(ctx context.Context, userId int64, toUserId int64, amount float64, address string) error
@@ -310,7 +311,7 @@ type UserBalanceRepo interface {
 	WithdrawDhb(ctx context.Context, userId int64, amount int64) error
 	WithdrawC(ctx context.Context, userId int64, amount int64) error
 	TranDhb(ctx context.Context, userId int64, toUserId int64, amount int64) error
-	GetWithdrawByUserId(ctx context.Context, userId int64, b *Pagination) ([]*Withdraw, error)
+	GetWithdrawByUserId(ctx context.Context, userId int64, coinType string, b *Pagination) ([]*Withdraw, error)
 	GetWithdrawByUserId2(ctx context.Context, userId int64) ([]*Withdraw, error)
 	GetUserBalanceRecordByUserId(ctx context.Context, userId int64, typeCoin string, tran string) ([]*UserBalanceRecord, error)
 	GetUserBalanceRecordsByUserId(ctx context.Context, userId int64) ([]*UserBalanceRecord, error)
@@ -1505,7 +1506,12 @@ func (uuc *UserUseCase) WithdrawList(ctx context.Context, req *v1.WithdrawListRe
 		List: make([]*v1.WithdrawListReply_List, 0),
 	}
 
-	withdraws, err = uuc.ubRepo.GetWithdrawByUserId(ctx, user.ID, &Pagination{
+	coinType := "USDT"
+	if 2 == req.CoinType {
+		coinType = "ISPAY"
+	}
+
+	withdraws, err = uuc.ubRepo.GetWithdrawByUserId(ctx, user.ID, coinType, &Pagination{
 		PageNum:  int(req.Page),
 		PageSize: 20,
 	})
@@ -2548,6 +2554,37 @@ func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, u
 		userBalance *UserBalance
 	)
 
+	// 配置
+	var (
+		configs         []*Config
+		withdrawMin     float64
+		withdrawRate    float64
+		withdrawMinTwo  float64
+		withdrawRateTwo float64
+	)
+	configs, err = uuc.configRepo.GetConfigByKeys(ctx,
+		"withdraw_rate",
+		"withdraw_amount_min",
+		"withdraw_rate_two",
+		"withdraw_amount_min_two",
+	)
+	if nil != configs {
+		for _, vConfig := range configs {
+			if "withdraw_amount_min" == vConfig.KeyName {
+				withdrawMin, _ = strconv.ParseFloat(vConfig.Value, 10)
+			}
+			if "withdraw_rate" == vConfig.KeyName {
+				withdrawRate, _ = strconv.ParseFloat(vConfig.Value, 10)
+			}
+			if "withdraw_amount_min_two" == vConfig.KeyName {
+				withdrawMinTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
+			}
+			if "withdraw_rate_two" == vConfig.KeyName {
+				withdrawRateTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
+			}
+		}
+	}
+
 	userBalance, err = uuc.ubRepo.GetUserBalance(ctx, user.ID)
 	if nil != err {
 		return &v1.WithdrawReply{
@@ -2555,74 +2592,92 @@ func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, u
 		}, nil
 	}
 
-	amountFloat := float64(req.SendBody.Amount)
-	if userBalance.BalanceUsdtFloat < amountFloat {
-		return &v1.WithdrawReply{
-			Status: "可提余额不足",
-		}, nil
-	}
+	if 2 == req.SendBody.CoinType {
+		amountFloat := float64(req.SendBody.Amount)
+		if userBalance.BalanceRawFloat < amountFloat {
+			return &v1.WithdrawReply{
+				Status: "可提余额不足",
+			}, nil
+		}
 
-	if 1 > amountFloat {
-		return &v1.WithdrawReply{
-			Status: "错误金额",
-		}, nil
-	}
+		if 1 > amountFloat {
+			return &v1.WithdrawReply{
+				Status: "错误金额",
+			}, nil
+		}
 
-	// 配置
-	var (
-		configs     []*Config
-		withdrawMax float64
-		withdrawMin float64
-	)
-	configs, err = uuc.configRepo.GetConfigByKeys(ctx,
-		"withdraw_amount_max", "withdraw_amount_min",
-	)
-	if nil != configs {
-		for _, vConfig := range configs {
-			if "withdraw_amount_max" == vConfig.KeyName {
-				withdrawMax, _ = strconv.ParseFloat(vConfig.Value, 10)
+		if withdrawMinTwo > amountFloat {
+			return &v1.WithdrawReply{
+				Status: "fail min",
+			}, nil
+		}
+
+		amountFloatSubFee := amountFloat - amountFloat*withdrawRateTwo
+		if 0 >= amountFloat {
+			return &v1.WithdrawReply{
+				Status: "fail price",
+			}, nil
+		}
+
+		if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			err = uuc.ubRepo.WithdrawISPAY(ctx, user.ID, amountFloat) // 提现
+			if nil != err {
+				return err
+			}
+			_, err = uuc.ubRepo.GreateWithdraw(ctx, user.ID, amountFloatSubFee, amountFloat, "ISPAY", user.Address)
+			if nil != err {
+				return err
 			}
 
-			if "withdraw_amount_min" == vConfig.KeyName {
-				withdrawMin, _ = strconv.ParseFloat(vConfig.Value, 10)
+			return nil
+		}); nil != err {
+			return &v1.WithdrawReply{
+				Status: "错误",
+			}, nil
+		}
+	} else {
+		amountFloat := float64(req.SendBody.Amount)
+		if userBalance.BalanceUsdtFloat < amountFloat {
+			return &v1.WithdrawReply{
+				Status: "可提余额不足",
+			}, nil
+		}
+
+		if 1 > amountFloat {
+			return &v1.WithdrawReply{
+				Status: "错误金额",
+			}, nil
+		}
+
+		if withdrawMin > amountFloat {
+			return &v1.WithdrawReply{
+				Status: "fail min",
+			}, nil
+		}
+
+		amountFloatSubFee := amountFloat - amountFloat*withdrawRate
+		if 0 >= amountFloat {
+			return &v1.WithdrawReply{
+				Status: "fail price",
+			}, nil
+		}
+
+		if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			err = uuc.ubRepo.WithdrawUsdt2(ctx, user.ID, amountFloat) // 提现
+			if nil != err {
+				return err
 			}
+			_, err = uuc.ubRepo.GreateWithdraw(ctx, user.ID, amountFloatSubFee, amountFloat, "USDT", user.Address)
+			if nil != err {
+				return err
+			}
+
+			return nil
+		}); nil != err {
+			return &v1.WithdrawReply{
+				Status: "错误",
+			}, nil
 		}
-	}
-
-	if withdrawMax < amountFloat {
-		return &v1.WithdrawReply{
-			Status: "fail max",
-		}, nil
-	}
-
-	if withdrawMin > amountFloat {
-		return &v1.WithdrawReply{
-			Status: "fail min",
-		}, nil
-	}
-
-	amountFloatSubFee := amountFloat
-	if 0 >= amountFloat {
-		return &v1.WithdrawReply{
-			Status: "fail price",
-		}, nil
-	}
-
-	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
-		err = uuc.ubRepo.WithdrawUsdt2(ctx, user.ID, amountFloat) // 提现
-		if nil != err {
-			return err
-		}
-		_, err = uuc.ubRepo.GreateWithdraw(ctx, user.ID, amountFloatSubFee, amountFloat, "USDT", user.Address)
-		if nil != err {
-			return err
-		}
-
-		return nil
-	}); nil != err {
-		return &v1.WithdrawReply{
-			Status: "错误",
-		}, nil
 	}
 
 	return &v1.WithdrawReply{
