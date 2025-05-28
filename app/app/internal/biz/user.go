@@ -762,11 +762,11 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	tmpMaxId := int64(0)
 	tmpRecommendNum := uint64(0)
 	for _, vMyLowUser := range myLowUser[myUser.ID] {
-		if _, ok := usersMap[vMyLowUser.ID]; !ok {
+		if _, ok := usersMap[vMyLowUser.UserId]; !ok {
 			continue
 		}
 
-		if usersMap[vMyLowUser.ID].Amount > 0 {
+		if usersMap[vMyLowUser.UserId].Amount > 0 {
 			tmpRecommendNum += 1
 		}
 
@@ -778,7 +778,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 
 	if 0 < tmpMaxId {
 		for _, vMyLowUser := range myLowUser[myUser.ID] {
-			if _, ok := usersMap[vMyLowUser.ID]; !ok {
+			if _, ok := usersMap[vMyLowUser.UserId]; !ok {
 				continue
 			}
 
