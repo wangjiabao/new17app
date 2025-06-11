@@ -140,12 +140,12 @@ func (a *AppService) EthAuthorize(ctx context.Context, req *v1.EthAuthorizeReque
 		}, nil
 	}
 
-	if 1 == user.Lock {
-		return &v1.EthAuthorizeReply{
-			Token:  "",
-			Status: "用户已锁定",
-		}, nil
-	}
+	//if 1 == user.Lock {
+	//	return &v1.EthAuthorizeReply{
+	//		Token:  "",
+	//		Status: "用户已锁定",
+	//	}, nil
+	//}
 
 	claims := auth.CustomClaims{
 		UserId:   user.ID,
@@ -899,9 +899,6 @@ var lockWithdraw sync.Mutex
 
 // Withdraw withdraw.
 func (a *AppService) Withdraw(ctx context.Context, req *v1.WithdrawRequest) (*v1.WithdrawReply, error) {
-	lockWithdraw.Lock()
-	defer lockWithdraw.Unlock()
-
 	// 在上下文 context 中取出 claims 对象
 	var (
 		err           error
@@ -944,6 +941,9 @@ func (a *AppService) Withdraw(ctx context.Context, req *v1.WithdrawRequest) (*v1
 			Status: "用户已锁定",
 		}, nil
 	}
+
+	lockWithdraw.Lock()
+	defer lockWithdraw.Unlock()
 
 	//var (
 	//	address string
