@@ -311,7 +311,7 @@ type UserBalanceRepo interface {
 	WithdrawDhb(ctx context.Context, userId int64, amount int64) error
 	WithdrawC(ctx context.Context, userId int64, amount int64) error
 	TranDhb(ctx context.Context, userId int64, toUserId int64, amount int64) error
-	GetWithdrawByUserId(ctx context.Context, userId int64, coinType string, b *Pagination) ([]*Withdraw, error)
+	GetWithdrawByUserId(ctx context.Context, userId int64, coinType string, b *Pagination) ([]*Withdraw, int64, error)
 	GetWithdrawByUserId2(ctx context.Context, userId int64) ([]*Withdraw, error)
 	GetUserBalanceRecordByUserId(ctx context.Context, userId int64, typeCoin string, tran string) ([]*UserBalanceRecord, error)
 	GetUserBalanceRecordsByUserId(ctx context.Context, userId int64) ([]*UserBalanceRecord, error)
@@ -1499,11 +1499,13 @@ func (uuc *UserUseCase) WithdrawList(ctx context.Context, req *v1.WithdrawListRe
 
 	var (
 		withdraws []*Withdraw
+		count     int64
 		err       error
 	)
 
 	res := &v1.WithdrawListReply{
-		List: make([]*v1.WithdrawListReply_List, 0),
+		Count: 0,
+		List:  make([]*v1.WithdrawListReply_List, 0),
 	}
 
 	coinType := "USDT"
@@ -1511,7 +1513,7 @@ func (uuc *UserUseCase) WithdrawList(ctx context.Context, req *v1.WithdrawListRe
 		coinType = "RAW"
 	}
 
-	withdraws, err = uuc.ubRepo.GetWithdrawByUserId(ctx, user.ID, coinType, &Pagination{
+	withdraws, count, err = uuc.ubRepo.GetWithdrawByUserId(ctx, user.ID, coinType, &Pagination{
 		PageNum:  int(req.Page),
 		PageSize: 20,
 	})
@@ -1526,6 +1528,7 @@ func (uuc *UserUseCase) WithdrawList(ctx context.Context, req *v1.WithdrawListRe
 		})
 	}
 
+	res.Count = uint64(count)
 	return res, nil
 }
 

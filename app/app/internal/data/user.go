@@ -3137,15 +3137,20 @@ func (ub *UserBalanceRepo) GetWithdrawByUserId2(ctx context.Context, userId int6
 }
 
 // GetWithdrawByUserId .
-func (ub *UserBalanceRepo) GetWithdrawByUserId(ctx context.Context, userId int64, coinType string, b *biz.Pagination) ([]*biz.Withdraw, error) {
+func (ub *UserBalanceRepo) GetWithdrawByUserId(ctx context.Context, userId int64, coinType string, b *biz.Pagination) ([]*biz.Withdraw, int64, error) {
 	var withdraws []*Withdraw
 	res := make([]*biz.Withdraw, 0)
-	if err := ub.data.db.Where("user_id=?", userId).Where("type=?", coinType).Scopes(Paginate(b.PageNum, b.PageSize)).Table("withdraw").Find(&withdraws).Error; err != nil {
+	var count int64
+
+	instance := ub.data.db.Where("user_id=?", userId).Where("type=?", coinType)
+	instance = instance.Count(&count)
+
+	if err := instance.Scopes(Paginate(b.PageNum, b.PageSize)).Order("id desc").Table("withdraw").Find(&withdraws).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return res, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
+			return res, 0, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
 		}
 
-		return nil, errors.New(500, "WITHDRAW ERROR", err.Error())
+		return nil, 0, errors.New(500, "WITHDRAW ERROR", err.Error())
 	}
 
 	for _, withdraw := range withdraws {
@@ -3161,7 +3166,7 @@ func (ub *UserBalanceRepo) GetWithdrawByUserId(ctx context.Context, userId int64
 			CreatedAt:       withdraw.CreatedAt,
 		})
 	}
-	return res, nil
+	return res, count, nil
 }
 
 // GetUserBalanceRecordByUserId .
