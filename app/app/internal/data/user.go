@@ -3142,15 +3142,15 @@ func (ub *UserBalanceRepo) GetWithdrawByUserId(ctx context.Context, userId int64
 	res := make([]*biz.Withdraw, 0)
 	var count int64
 
-	instance := ub.data.db.Where("user_id=?", userId).Where("type=?", coinType)
+	instance := ub.data.db.Where("user_id=?", userId).Table("withdraw").Where("type=?", coinType)
 	instance = instance.Count(&count)
 
 	if err := instance.Scopes(Paginate(b.PageNum, b.PageSize)).Order("id desc").Table("withdraw").Find(&withdraws).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return res, 0, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
+			return res, count, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
 		}
 
-		return nil, 0, errors.New(500, "WITHDRAW ERROR", err.Error())
+		return nil, count, errors.New(500, "WITHDRAW ERROR", err.Error())
 	}
 
 	for _, withdraw := range withdraws {
