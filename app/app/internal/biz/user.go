@@ -45,6 +45,13 @@ type User struct {
 	RecommendUserReward    int64
 	RecommendUser          int64
 	RecommendUserH         int64
+	One                    string
+	Two                    string
+	Three                  string
+	Four                   string
+	Five                   string
+	Six                    string
+	Seven                  string
 }
 
 type Total struct {
@@ -52,6 +59,14 @@ type Total struct {
 	One   float64
 	Two   float64
 	Three float64
+}
+
+type Good struct {
+	ID     int64
+	Amount uint64
+	Name   string
+	One    string
+	Two    string
 }
 
 type UserInfo struct {
@@ -247,6 +262,10 @@ type BuyRecord struct {
 	Amount      float64
 	AmountGet   float64
 	LastUpdated int64
+	One         string
+	Two         string
+	Three       string
+	Four        int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -331,6 +350,7 @@ type UserBalanceRepo interface {
 	UpdateWithdrawAmount(ctx context.Context, id int64, status string, amount int64) (*Withdraw, error)
 	GetUserRewardRecommendSort(ctx context.Context) ([]*UserSortRecommendReward, error)
 	GetUserRewardTodayTotalByUserId(ctx context.Context, userId int64) (*UserSortRecommendReward, error)
+	GetGoods(ctx context.Context) ([]*Good, error)
 
 	SetBalanceReward(ctx context.Context, userId int64, amount int64) error
 	UpdateBalanceReward(ctx context.Context, userId int64, id int64, amount int64, status int64) error
@@ -383,6 +403,7 @@ type UserRepo interface {
 	UpdateUserMyTotalAmount(ctx context.Context, userId int64, amountUsdt float64) error
 	UpdateUserMyRecommendTotalNum(ctx context.Context, userId int64, address string, rewardHb int64, tmpRewardU bool) error
 	UpdateUserMyRecommendTotal(ctx context.Context, userId int64, amountUsdt float64) error
+	UpdateUserAddressInfo(ctx context.Context, userId int64, one, two, three, four, five, six, seven string) error
 	UpdateUserVip(ctx context.Context, userId int64, vip int64) error
 	UpdateUserRewardRecommend2(ctx context.Context, userId int64, amountUsdt float64, amountUsdtTotal float64, stop bool, level, i int64, address string) (int64, error)
 	UpdateUserRewardRecommendNew(ctx context.Context, userId int64, amountUsdt float64, amountUsdtTotal float64, stop bool, i int64, address string) (int64, error)
@@ -628,7 +649,9 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		withdrawRate          float64
 		withdrawMinTwo        float64
 		withdrawRateTwo       float64
+		notice                string
 		users                 []*User
+		goods                 []*Good
 	)
 
 	// 配置
@@ -637,6 +660,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		"withdraw_amount_min",
 		"withdraw_rate_two",
 		"withdraw_amount_min_two",
+		"notice",
 	)
 	if nil != configs {
 		for _, vConfig := range configs {
@@ -651,6 +675,9 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 			}
 			if "withdraw_rate_two" == vConfig.KeyName {
 				withdrawRateTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
+			}
+			if "notice" == vConfig.KeyName {
+				notice = vConfig.Value
 			}
 		}
 	}
@@ -678,6 +705,20 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	userBalance, err = uuc.ubRepo.GetUserBalance(ctx, myUser.ID)
 	if nil != err {
 		return nil, err
+	}
+
+	goods, err = uuc.ubRepo.GetGoods(ctx)
+	if nil != err {
+		return nil, err
+	}
+	resGoods := make([]*v1.UserInfoReply_List, 0)
+	for _, v := range goods {
+		resGoods = append(resGoods, &v1.UserInfoReply_List{
+			One:   v.Name,
+			Two:   v.One,
+			Three: v.Two,
+			Four:  v.Amount,
+		})
 	}
 
 	//var (
@@ -830,6 +871,35 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		tmpAmountGet += one
 	}
 
+	one := myUser.One
+	if "1" == one {
+		one = ""
+	}
+	two := myUser.Two
+	if "1" == two {
+		two = ""
+	}
+	three := myUser.Three
+	if "1" == three {
+		three = ""
+	}
+	four := myUser.Four
+	if "1" == four {
+		four = ""
+	}
+	five := myUser.Five
+	if "1" == five {
+		five = ""
+	}
+	six := myUser.Six
+	if "1" == six {
+		six = ""
+	}
+	seven := myUser.Seven
+	if "1" == seven {
+		seven = ""
+	}
+
 	return &v1.UserInfoReply{
 		Status:            "ok",
 		Level:             tmpLevel,
@@ -854,6 +924,15 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		Raw:               fmt.Sprintf("%.2f", userBalance.BalanceRawFloat),
 		WithdrawRateTwo:   withdrawRateTwo,
 		WithdrawMinTwo:    withdrawMinTwo,
+		One:               one,
+		Two:               two,
+		Three:             three,
+		Four:              four,
+		Five:              five,
+		Six:               six,
+		Seven:             seven,
+		Notice:            notice,
+		Goods:             resGoods,
 	}, nil
 }
 
@@ -1592,6 +1671,8 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 	var (
 		myUser    *User
 		buyRecord []*BuyRecord
+		goods     []*Good
+		goodsMap  map[int64]*Good
 		count     int64
 		err       error
 	)
@@ -1609,6 +1690,15 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 		}, nil
 	}
 
+	goods, err = uuc.ubRepo.GetGoods(ctx)
+	if nil != err {
+		return nil, err
+	}
+	goodsMap = make(map[int64]*Good, 0)
+	for _, v := range goods {
+		goodsMap[v.ID] = v
+	}
+
 	num := 2.5
 	for _, vBuyRecord := range buyRecord {
 		tmpAmountGet := vBuyRecord.AmountGet
@@ -1619,6 +1709,30 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 			tmpAmountLast = vBuyRecord.Amount*num - vBuyRecord.AmountGet
 		}
 
+		oneTmp := ""
+		if "1" != vBuyRecord.One {
+			oneTmp = vBuyRecord.One
+		}
+		twoTmp := ""
+		if "1" != vBuyRecord.One {
+			twoTmp = vBuyRecord.Two
+		}
+		threeTmp := ""
+		if "1" != vBuyRecord.One {
+			threeTmp = vBuyRecord.Three
+		}
+
+		fourTmp := ""
+		fiveTmp := ""
+		sixTmp := ""
+		if 0 != vBuyRecord.Four {
+			if _, ok := goodsMap[vBuyRecord.Four]; ok {
+				fourTmp = goodsMap[vBuyRecord.Four].Name
+				fiveTmp = goodsMap[vBuyRecord.Four].One
+				sixTmp = goodsMap[vBuyRecord.Four].Two
+			}
+		}
+
 		res = append(res, &v1.OrderListReply_List{
 			CreatedAt:  vBuyRecord.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Amount:     fmt.Sprintf("%.2f", vBuyRecord.Amount),
@@ -1626,6 +1740,12 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 			AmountGet:  fmt.Sprintf("%.2f", tmpAmountGet),
 			AmountLast: fmt.Sprintf("%.2f", tmpAmountLast),
 			Num:        "2.5",
+			One:        oneTmp,
+			Two:        twoTmp,
+			Three:      threeTmp,
+			Four:       fourTmp,
+			Five:       fiveTmp,
+			Six:        sixTmp,
 		})
 	}
 
@@ -2546,6 +2666,59 @@ func (uuc *UserUseCase) Exchange(ctx context.Context, req *v1.ExchangeRequest, u
 		Status: "ok",
 	}, nil
 
+}
+
+func (uuc *UserUseCase) SetInfo(ctx context.Context, req *v1.SetInfoRequest, user *User) (*v1.SetInfoReply, error) {
+	var (
+		err error
+	)
+
+	if 100 < len(req.SendBody.One) {
+		return &v1.SetInfoReply{
+			Status: "国家字符超限",
+		}, nil
+	}
+	if 100 < len(req.SendBody.Two) {
+		return &v1.SetInfoReply{
+			Status: "省份字符超限",
+		}, nil
+	}
+	if 100 < len(req.SendBody.Three) {
+		return &v1.SetInfoReply{
+			Status: "城市字符超限",
+		}, nil
+	}
+	if 100 < len(req.SendBody.Four) {
+		return &v1.SetInfoReply{
+			Status: "地区字符超限",
+		}, nil
+	}
+	if 100 < len(req.SendBody.Five) {
+		return &v1.SetInfoReply{
+			Status: "详细字符超限",
+		}, nil
+	}
+	if 100 < len(req.SendBody.Six) {
+		return &v1.SetInfoReply{
+			Status: "收件人手机字符超限",
+		}, nil
+	}
+	if 100 < len(req.SendBody.One) {
+		return &v1.SetInfoReply{
+			Status: "收件人字符超限",
+		}, nil
+	}
+
+	err = uuc.repo.UpdateUserAddressInfo(ctx, user.ID, req.SendBody.One, req.SendBody.Two, req.SendBody.Three, req.SendBody.Four, req.SendBody.Five, req.SendBody.Six, req.SendBody.Seven)
+	if nil != err {
+		return &v1.SetInfoReply{
+			Status: "修改失败，稍后重试",
+		}, nil
+	}
+
+	return &v1.SetInfoReply{
+		Status: "ok",
+	}, nil
 }
 
 func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, user *User) (*v1.WithdrawReply, error) {

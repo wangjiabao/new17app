@@ -26,6 +26,7 @@ const (
 	App_SetToday_FullMethodName            = "/api.App/SetToday"
 	App_SetTodayList_FullMethodName        = "/api.App/SetTodayList"
 	App_Withdraw_FullMethodName            = "/api.App/Withdraw"
+	App_SetInfo_FullMethodName             = "/api.App/SetInfo"
 	App_WithdrawList_FullMethodName        = "/api.App/WithdrawList"
 	App_OrderList_FullMethodName           = "/api.App/OrderList"
 	App_RewardList_FullMethodName          = "/api.App/RewardList"
@@ -63,6 +64,7 @@ type AppClient interface {
 	SetToday(ctx context.Context, in *SetTodayRequest, opts ...grpc.CallOption) (*SetTodayReply, error)
 	SetTodayList(ctx context.Context, in *SetTodayListRequest, opts ...grpc.CallOption) (*SetTodayListReply, error)
 	Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*WithdrawReply, error)
+	SetInfo(ctx context.Context, in *SetInfoRequest, opts ...grpc.CallOption) (*SetInfoReply, error)
 	WithdrawList(ctx context.Context, in *WithdrawListRequest, opts ...grpc.CallOption) (*WithdrawListReply, error)
 	// 订单
 	OrderList(ctx context.Context, in *OrderListRequest, opts ...grpc.CallOption) (*OrderListReply, error)
@@ -179,6 +181,15 @@ func (c *appClient) SetTodayList(ctx context.Context, in *SetTodayListRequest, o
 func (c *appClient) Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*WithdrawReply, error) {
 	out := new(WithdrawReply)
 	err := c.cc.Invoke(ctx, App_Withdraw_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) SetInfo(ctx context.Context, in *SetInfoRequest, opts ...grpc.CallOption) (*SetInfoReply, error) {
+	out := new(SetInfoReply)
+	err := c.cc.Invoke(ctx, App_SetInfo_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -412,6 +423,7 @@ type AppServer interface {
 	SetToday(context.Context, *SetTodayRequest) (*SetTodayReply, error)
 	SetTodayList(context.Context, *SetTodayListRequest) (*SetTodayListReply, error)
 	Withdraw(context.Context, *WithdrawRequest) (*WithdrawReply, error)
+	SetInfo(context.Context, *SetInfoRequest) (*SetInfoReply, error)
 	WithdrawList(context.Context, *WithdrawListRequest) (*WithdrawListReply, error)
 	// 订单
 	OrderList(context.Context, *OrderListRequest) (*OrderListReply, error)
@@ -488,6 +500,9 @@ func (UnimplementedAppServer) SetTodayList(context.Context, *SetTodayListRequest
 }
 func (UnimplementedAppServer) Withdraw(context.Context, *WithdrawRequest) (*WithdrawReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Withdraw not implemented")
+}
+func (UnimplementedAppServer) SetInfo(context.Context, *SetInfoRequest) (*SetInfoReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetInfo not implemented")
 }
 func (UnimplementedAppServer) WithdrawList(context.Context, *WithdrawListRequest) (*WithdrawListReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WithdrawList not implemented")
@@ -696,6 +711,24 @@ func _App_Withdraw_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AppServer).Withdraw(ctx, req.(*WithdrawRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_SetInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).SetInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_SetInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).SetInfo(ctx, req.(*SetInfoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1166,6 +1199,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Withdraw",
 			Handler:    _App_Withdraw_Handler,
+		},
+		{
+			MethodName: "SetInfo",
+			Handler:    _App_SetInfo_Handler,
 		},
 		{
 			MethodName: "WithdrawList",

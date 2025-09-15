@@ -56,6 +56,13 @@ service App {
 		};
 	};
 
+	rpc SetInfo (SetInfoRequest) returns (SetInfoReply) {
+		option (google.api.http) = {
+			post: "/api/app_server/set_info"
+			body: "send_body"
+		};
+	};
+
 	rpc WithdrawList (WithdrawListRequest) returns (WithdrawListReply) {
 		option (google.api.http) = {
 			get: "/api/app_server/withdraw_list"
@@ -430,6 +437,23 @@ message UserInfoReply {
 	string raw = 31; // ispay余额
 	double withdrawRateTwo = 32; // ispay提现手续费
 	double withdrawMinTwo = 33; // ispay最小提现
+
+	string one = 40; // 国家
+	string two = 41; // 省份
+	string three = 42; // 城市
+	string four = 43; // 区域
+	string five = 44; // 详情
+	string six = 45; // 收件人手机
+	string seven = 46; // 收件人
+
+	string notice = 47; //  公告内容
+	repeated List goods = 48; // ido
+	message List {
+		string one = 1; // 商品名称
+		string two = 2; // 商品描述
+		string three = 3; // 商品图片
+		uint64 four = 4; // 商品金额
+	}
 }
 
 message RewardListRequest {
@@ -531,6 +555,13 @@ message OrderListReply {
 		string amountLast = 5; // 待释放
 		string num = 6; // 倍率
 		uint64 status = 3; // 1收益中 2已出局
+		string one = 10; // 收件地址
+		string two = 11; // 收件人手机
+		string three = 12; // 收件人
+		string four = 13; // 商品名称
+		string five = 14; // 商品描述
+		string six = 15; // 商品图片
+
 	}
 }
 
@@ -600,6 +631,25 @@ message WithdrawRequest {
 }
 
 message WithdrawReply {
+	string status = 1;
+}
+
+message SetInfoRequest {
+	message SendBody{
+		string sign = 4;
+		string one = 40; // 国家
+		string two = 41; // 省份
+		string three = 42; // 城市
+		string four = 43; // 区域
+		string five = 44; // 详情
+		string six = 45; // 收件人手机
+		string seven = 46; // 收件人
+	}
+
+	SendBody send_body = 1;
+}
+
+message SetInfoReply {
 	string status = 1;
 }
 

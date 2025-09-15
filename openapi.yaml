@@ -429,6 +429,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/app_server/set_info:
+        post:
+            tags:
+                - App
+            operationId: App_SetInfo
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SetInfoRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SetInfoReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/app_server/set_today:
         post:
             tags:
@@ -877,6 +901,18 @@ components:
                     type: string
                 status:
                     type: string
+                one:
+                    type: string
+                two:
+                    type: string
+                three:
+                    type: string
+                four:
+                    type: string
+                five:
+                    type: string
+                six:
+                    type: string
         PasswordChangeReply:
             type: object
             properties:
@@ -968,6 +1004,30 @@ components:
             type: object
             properties:
                 amount:
+                    type: string
+        SetInfoReply:
+            type: object
+            properties:
+                status:
+                    type: string
+        SetInfoRequest_SendBody:
+            type: object
+            properties:
+                sign:
+                    type: string
+                one:
+                    type: string
+                two:
+                    type: string
+                three:
+                    type: string
+                four:
+                    type: string
+                five:
+                    type: string
+                six:
+                    type: string
+                seven:
                     type: string
         SetTodayListReply:
             type: object
@@ -1165,6 +1225,37 @@ components:
                 withdrawMinTwo:
                     type: number
                     format: double
+                one:
+                    type: string
+                two:
+                    type: string
+                three:
+                    type: string
+                four:
+                    type: string
+                five:
+                    type: string
+                six:
+                    type: string
+                seven:
+                    type: string
+                notice:
+                    type: string
+                goods:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/UserInfoReply_List'
+        UserInfoReply_List:
+            type: object
+            properties:
+                one:
+                    type: string
+                two:
+                    type: string
+                three:
+                    type: string
+                four:
+                    type: string
         WithdrawListReply:
             type: object
             properties:

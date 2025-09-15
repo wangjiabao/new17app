@@ -42,6 +42,13 @@ type User struct {
 	RecommendUserReward    int64     `gorm:"type:int;not null"`
 	RecommendUser          int64     `gorm:"type:int;not null"`
 	RecommendUserH         int64     `gorm:"type:int;not null"`
+	OneNew                 string    `gorm:"type:varchar(200)"`
+	TwoNew                 string    `gorm:"type:varchar(200)"`
+	ThreeNew               string    `gorm:"type:varchar(200)"`
+	FourNew                string    `gorm:"type:varchar(200)"`
+	FiveNew                string    `gorm:"type:varchar(200)"`
+	SixNew                 string    `gorm:"type:varchar(200)"`
+	SevenNew               string    `gorm:"type:varchar(200)"`
 }
 
 type Total struct {
@@ -73,6 +80,10 @@ type BuyRecord struct {
 	Amount      float64   `gorm:"type:decimal(65,20);not null"`
 	AmountGet   float64   `gorm:"type:decimal(65,20);not null"`
 	LastUpdated int64     `gorm:"type:int;not null"`
+	One         string    `gorm:"type:varchar(500);not null"`
+	Two         string    `gorm:"type:varchar(45);not null"`
+	Three       string    `gorm:"type:varchar(45);not null"`
+	Four        int64     `gorm:"type:int;not null"`
 	CreatedAt   time.Time `gorm:"type:datetime;not null"`
 	UpdatedAt   time.Time `gorm:"type:datetime;not null"`
 }
@@ -208,6 +219,16 @@ type Stake struct {
 	Day       int64     `gorm:"type:int;not null"`
 	Amount    float64   `gorm:"type:decimal(65,20);not null"`
 	Reward    float64   `gorm:"type:decimal(65,20);not null"`
+	CreatedAt time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt time.Time `gorm:"type:datetime;not null"`
+}
+
+type Good struct {
+	ID        int64     `gorm:"primarykey;type:int"`
+	Amount    uint64    `gorm:"type:bigint;not null"`
+	Name      string    `gorm:"type:varchar(100);not null"`
+	One       string    `gorm:"type:varchar(250);not null"`
+	Two       string    `gorm:"type:varchar(100);not null"`
 	CreatedAt time.Time `gorm:"type:datetime;not null"`
 	UpdatedAt time.Time `gorm:"type:datetime;not null"`
 }
@@ -446,6 +467,25 @@ func (u *UserRepo) UpdateUserMyRecommendTotal(ctx context.Context, userId int64,
 	res := u.data.DB(ctx).Table("user").Where("id=?", userId).
 		Updates(map[string]interface{}{
 			"amount_recommend_usdt_get": gorm.Expr("amount_recommend_usdt_get + ?", amountUsdt)})
+	if res.Error != nil {
+		return errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
+	}
+
+	return nil
+}
+
+// UpdateUserAddressInfo .
+func (u *UserRepo) UpdateUserAddressInfo(ctx context.Context, userId int64, one, two, three, four, five, six, seven string) error {
+	res := u.data.DB(ctx).Table("user").Where("id=?", userId).
+		Updates(map[string]interface{}{
+			"one_new":   one,
+			"two_new":   two,
+			"three_new": three,
+			"four_new":  four,
+			"five_new":  five,
+			"six_new":   six,
+			"seven_new": seven,
+		})
 	if res.Error != nil {
 		return errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
 	}
@@ -771,6 +811,10 @@ func (u *UserRepo) GetBuyRecord(ctx context.Context, userId uint64, b *biz.Pagin
 			CreatedAt:   v.CreatedAt,
 			UpdatedAt:   v.UpdatedAt,
 			LastUpdated: v.LastUpdated,
+			One:         v.One,
+			Two:         v.Two,
+			Three:       v.Three,
+			Four:        v.Four,
 		})
 	}
 
@@ -1271,6 +1315,13 @@ func (u *UserRepo) GetAllUsers(ctx context.Context) ([]*biz.User, error) {
 			LockReward:             item.LockReward,
 			IsDelete:               item.IsDelete,
 			OutRate:                item.OutRate,
+			One:                    item.OneNew,
+			Two:                    item.TwoNew,
+			Three:                  item.ThreeNew,
+			Four:                   item.FourNew,
+			Five:                   item.FiveNew,
+			Six:                    item.SixNew,
+			Seven:                  item.SevenNew,
 		})
 	}
 	return res, nil
@@ -3813,6 +3864,30 @@ func (ub *UserBalanceRepo) GetUserRewardByUserIdPage(ctx context.Context, b *biz
 		})
 	}
 	return res, nil, count
+}
+
+// GetGoods .
+func (ub *UserBalanceRepo) GetGoods(ctx context.Context) ([]*biz.Good, error) {
+	var goods []*Good
+	res := make([]*biz.Good, 0)
+	if err := ub.data.db.Table("good").Order("id desc").Find(&goods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("GOOD_NOT_FOUND", "good not found")
+		}
+
+		return nil, errors.New(500, "Good ERROR", err.Error())
+	}
+	for _, good := range goods {
+		res = append(res, &biz.Good{
+			ID:     good.ID,
+			Amount: good.Amount,
+			Name:   good.Name,
+			One:    good.One,
+			Two:    good.Two,
+		})
+	}
+
+	return res, nil
 }
 
 // GetUserRewardByUserId .
