@@ -2677,7 +2677,7 @@ func (uuc *UserUseCase) SetInfo(ctx context.Context, req *v1.SetInfoRequest, use
 		err error
 	)
 
-	if 100 < len(req.SendBody.One) {
+	if 1 > len(req.SendBody.One) || 100 < len(req.SendBody.One) {
 		return &v1.SetInfoReply{
 			Status: "国家字符超限",
 		}, nil
@@ -2697,23 +2697,23 @@ func (uuc *UserUseCase) SetInfo(ctx context.Context, req *v1.SetInfoRequest, use
 			Status: "地区字符超限",
 		}, nil
 	}
-	if 100 < len(req.SendBody.Five) {
+	if 1 > len(req.SendBody.Five) || 100 < len(req.SendBody.Five) {
 		return &v1.SetInfoReply{
-			Status: "详细字符超限",
+			Status: "详细字符数不符合标准",
 		}, nil
 	}
-	if 100 < len(req.SendBody.Six) {
+	if 1 > len(req.SendBody.Six) || 100 < len(req.SendBody.Six) {
 		return &v1.SetInfoReply{
-			Status: "收件人手机字符超限",
+			Status: "收件人手机字符数不符合标准",
 		}, nil
 	}
-	if 100 < len(req.SendBody.One) {
+	if 1 > len(req.SendBody.Seven) || 100 < len(req.SendBody.Seven) {
 		return &v1.SetInfoReply{
-			Status: "收件人字符超限",
+			Status: "收件人字符数不符合标准",
 		}, nil
 	}
 
-	err = uuc.repo.UpdateUserAddressInfo(ctx, user.ID, req.SendBody.One, req.SendBody.Two, req.SendBody.Three, req.SendBody.Four, req.SendBody.Five, req.SendBody.Six, req.SendBody.Seven)
+	err = uuc.repo.UpdateUserAddressInfo(ctx, user.ID, req.SendBody.One, "1", "1", "1", req.SendBody.Five, req.SendBody.Six, req.SendBody.Seven)
 	if nil != err {
 		return &v1.SetInfoReply{
 			Status: "修改失败，稍后重试",
