@@ -351,6 +351,7 @@ type UserBalanceRepo interface {
 	GetUserRewardRecommendSort(ctx context.Context) ([]*UserSortRecommendReward, error)
 	GetUserRewardTodayTotalByUserId(ctx context.Context, userId int64) (*UserSortRecommendReward, error)
 	GetGoods(ctx context.Context) ([]*Good, error)
+	GetGoodsAll(ctx context.Context) ([]*Good, error)
 
 	SetBalanceReward(ctx context.Context, userId int64, amount int64) error
 	UpdateBalanceReward(ctx context.Context, userId int64, id int64, amount int64, status int64) error
@@ -1693,7 +1694,7 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 		}, nil
 	}
 
-	goods, err = uuc.ubRepo.GetGoods(ctx)
+	goods, err = uuc.ubRepo.GetGoodsAll(ctx)
 	if nil != err {
 		return nil, err
 	}
