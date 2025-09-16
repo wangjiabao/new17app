@@ -453,6 +453,7 @@ message UserInfoReply {
 		string two = 2; // 商品描述
 		string three = 3; // 商品图片
 		uint64 four = 4; // 商品金额
+		string five = 5; // 商品大段描述
 	}
 }
 

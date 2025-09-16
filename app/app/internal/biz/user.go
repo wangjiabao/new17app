@@ -67,6 +67,7 @@ type Good struct {
 	Name   string
 	One    string
 	Two    string
+	Three  string
 }
 
 type UserInfo struct {
@@ -719,6 +720,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 			Two:   v.One,
 			Three: v.Two,
 			Four:  v.Amount,
+			Five:  v.Three,
 		})
 	}
 
