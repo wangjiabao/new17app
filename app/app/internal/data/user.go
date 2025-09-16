@@ -3875,7 +3875,7 @@ func (ub *UserBalanceRepo) GetUserRewardByUserIdPage(ctx context.Context, b *biz
 func (ub *UserBalanceRepo) GetGoods(ctx context.Context) ([]*biz.Good, error) {
 	var goods []*Good
 	res := make([]*biz.Good, 0)
-	if err := ub.data.db.Table("good").Order("id desc").Find(&goods).Error; err != nil {
+	if err := ub.data.db.Table("good").Order("amount asc").Find(&goods).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return res, errors.NotFound("GOOD_NOT_FOUND", "good not found")
 		}
