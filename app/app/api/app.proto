@@ -449,6 +449,7 @@ message UserInfoReply {
 	string notice = 47; //  公告内容
 	repeated List goods = 48; // ido
 	message List {
+		int64 id = 6;
 		string one = 1; // 商品名称
 		string two = 2; // 商品描述
 		string three = 3; // 商品图片

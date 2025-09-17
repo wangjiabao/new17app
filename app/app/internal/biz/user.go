@@ -716,6 +716,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	resGoods := make([]*v1.UserInfoReply_List, 0)
 	for _, v := range goods {
 		resGoods = append(resGoods, &v1.UserInfoReply_List{
+			Id:    v.ID,
 			One:   v.Name,
 			Two:   v.One,
 			Three: v.Two,

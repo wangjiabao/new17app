@@ -1248,6 +1248,8 @@ components:
         UserInfoReply_List:
             type: object
             properties:
+                id:
+                    type: string
                 one:
                     type: string
                 two:
