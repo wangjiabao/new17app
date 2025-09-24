@@ -2729,10 +2729,6 @@ func (uuc *UserUseCase) SetInfo(ctx context.Context, req *v1.SetInfoRequest, use
 }
 
 func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, user *User) (*v1.WithdrawReply, error) {
-	return &v1.WithdrawReply{
-		Status: "处理中，请稍后",
-	}, nil
-
 	var (
 		err         error
 		userBalance *UserBalance
