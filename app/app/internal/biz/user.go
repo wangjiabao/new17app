@@ -2741,12 +2741,14 @@ func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, u
 		withdrawRate    float64
 		withdrawMinTwo  float64
 		withdrawRateTwo float64
+		openWithdraw    uint64
 	)
 	configs, err = uuc.configRepo.GetConfigByKeys(ctx,
 		"withdraw_rate",
 		"withdraw_amount_min",
 		"withdraw_rate_two",
 		"withdraw_amount_min_two",
+		"open_withdraw",
 	)
 	if nil != configs {
 		for _, vConfig := range configs {
@@ -2762,7 +2764,16 @@ func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, u
 			if "withdraw_rate_two" == vConfig.KeyName {
 				withdrawRateTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
 			}
+			if "open_withdraw" == vConfig.KeyName {
+				openWithdraw, _ = strconv.ParseUint(vConfig.Value, 10, 64)
+			}
 		}
+	}
+
+	if 1 != openWithdraw {
+		return &v1.WithdrawReply{
+			Status: "暂未开放",
+		}, nil
 	}
 
 	userBalance, err = uuc.ubRepo.GetUserBalance(ctx, user.ID)
