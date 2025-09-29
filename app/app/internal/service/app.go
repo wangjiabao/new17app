@@ -1024,11 +1024,11 @@ func (a *AppService) SetInfo(ctx context.Context, req *v1.SetInfoRequest) (*v1.S
 		}, nil
 	}
 
-	if 1 == user.Lock {
-		return &v1.SetInfoReply{
-			Status: "用户已锁定",
-		}, nil
-	}
+	//if 1 == user.Lock {
+	//	return &v1.SetInfoReply{
+	//		Status: "用户已锁定",
+	//	}, nil
+	//}
 
 	lockSetInfo.Lock()
 	defer lockSetInfo.Unlock()
