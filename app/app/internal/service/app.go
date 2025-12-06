@@ -1469,21 +1469,21 @@ func addressCheck(addressParam string) (bool, error) {
 		return false, nil
 	}
 
-	client, err := ethclient.Dial("https://bsc-dataseed4.binance.org/")
-	if err != nil {
-		return false, err
-	}
-
-	// a random user account address
-	address := common.HexToAddress(addressParam)
-	bytecode, err := client.CodeAt(context.Background(), address, nil) // nil is latest block
-	if err != nil {
-		return false, err
-	}
-
-	if len(bytecode) > 0 {
-		return false, nil
-	}
+	//client, err := ethclient.Dial("https://bsc-dataseed4.binance.org/")
+	//if err != nil {
+	//	return false, err
+	//}
+	//
+	//// a random user account address
+	//address := common.HexToAddress(addressParam)
+	//bytecode, err := client.CodeAt(context.Background(), address, nil) // nil is latest block
+	//if err != nil {
+	//	return false, err
+	//}
+	//
+	//if len(bytecode) > 0 {
+	//	return false, nil
+	//}
 
 	return true, nil
 }
