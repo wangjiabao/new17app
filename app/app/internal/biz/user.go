@@ -805,7 +805,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	// 获取业绩
 	tmpAreaMax := uint64(0)
 	tmpAreaMin := uint64(0)
-	tmpMaxId := int64(0)
+	//tmpMaxId := int64(0)
 	tmpRecommendNum := uint64(0)
 	for _, vMyLowUser := range myLowUser[myUser.ID] {
 		if _, ok := usersMap[vMyLowUser.UserId]; !ok {
@@ -818,20 +818,24 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 
 		if tmpAreaMax < uint64(usersMap[vMyLowUser.UserId].MyTotalAmount)+usersMap[vMyLowUser.UserId].Amount {
 			tmpAreaMax = uint64(usersMap[vMyLowUser.UserId].MyTotalAmount) + usersMap[vMyLowUser.UserId].Amount
-			tmpMaxId = vMyLowUser.ID
+			//tmpMaxId = vMyLowUser.ID
 		}
 	}
 
-	if 0 < tmpMaxId {
-		for _, vMyLowUser := range myLowUser[myUser.ID] {
-			if _, ok := usersMap[vMyLowUser.UserId]; !ok {
-				continue
-			}
-
-			if tmpMaxId != vMyLowUser.ID {
-				tmpAreaMin += uint64(usersMap[vMyLowUser.UserId].MyTotalAmount) + usersMap[vMyLowUser.UserId].Amount
-			}
+	if 0 < tmpAreaMax {
+		if uint64(user.MyTotalAmount) > tmpAreaMax {
+			tmpAreaMin = uint64(user.MyTotalAmount) - tmpAreaMax
 		}
+		//for _, vMyLowUser := range myLowUser[myUser.ID] {
+		//	if _, ok := usersMap[vMyLowUser.UserId]; !ok {
+		//		continue
+		//	}
+		//
+		//	if tmpMaxId != vMyLowUser.ID {
+		//		tmpAreaMin += uint64(usersMap[vMyLowUser.UserId].MyTotalAmount) + usersMap[vMyLowUser.UserId].Amount
+		//	}
+		//
+		//}
 	}
 
 	tmpLevel := uint64(0)
