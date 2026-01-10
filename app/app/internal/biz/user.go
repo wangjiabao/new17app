@@ -823,8 +823,8 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 	}
 
 	if 0 < tmpAreaMax {
-		if uint64(user.MyTotalAmount) > tmpAreaMax {
-			tmpAreaMin = uint64(user.MyTotalAmount) - tmpAreaMax
+		if uint64(myUser.MyTotalAmount) > tmpAreaMax {
+			tmpAreaMin = uint64(myUser.MyTotalAmount) - tmpAreaMax
 		}
 		//for _, vMyLowUser := range myLowUser[myUser.ID] {
 		//	if _, ok := usersMap[vMyLowUser.UserId]; !ok {
