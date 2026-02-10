@@ -703,7 +703,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		return nil, nil
 	}
 
-	if 3 == myUser.Lock {
+	if 1 == myUser.Lock {
 		return nil, nil
 	}
 
