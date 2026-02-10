@@ -703,6 +703,10 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		return nil, nil
 	}
 
+	if 3 == myUser.Lock {
+		return nil, nil
+	}
+
 	// 余额，收益总数
 	userBalance, err = uuc.ubRepo.GetUserBalance(ctx, myUser.ID)
 	if nil != err {
