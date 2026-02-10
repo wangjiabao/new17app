@@ -1025,8 +1025,9 @@ func (uuc *UserUseCase) UserRecommend(ctx context.Context, req *v1.RecommendList
 
 		recommendTotal++
 		res = append(res, &v1.RecommendListReply_List{
-			Address: usersMap[vMyUserRecommend.UserId].Address,
-			Amount:  fmt.Sprintf("%d", uint64(usersMap[vMyUserRecommend.UserId].MyTotalAmount)+usersMap[vMyUserRecommend.UserId].Amount),
+			Address:  usersMap[vMyUserRecommend.UserId].Address,
+			Amount:   fmt.Sprintf("%d", uint64(usersMap[vMyUserRecommend.UserId].MyTotalAmount)+usersMap[vMyUserRecommend.UserId].Amount),
+			MyAmount: fmt.Sprintf("%d", usersMap[vMyUserRecommend.UserId].Amount),
 		})
 	}
 

@@ -603,7 +603,8 @@ message RecommendListReply {
 	repeated List recommends = 1;
 	message List {
 		string address = 1; // 地址
-		string amount = 2; // 业绩
+		string amount = 2; // 团队累计
+		string myAmount = 3; // 个人累计
 	}
 }
 
