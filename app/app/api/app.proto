@@ -437,6 +437,7 @@ message UserInfoReply {
 	string raw = 31; // ispay余额
 	double withdrawRateTwo = 32; // ispay提现手续费
 	double withdrawMinTwo = 33; // ispay最小提现
+	string rawNew = 34; // ispay余额
 
 	string one = 40; // 国家
 	string two = 41; // 省份

@@ -1227,6 +1227,8 @@ components:
                 withdrawMinTwo:
                     type: number
                     format: double
+                rawNew:
+                    type: string
                 one:
                     type: string
                 two:

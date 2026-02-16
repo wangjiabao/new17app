@@ -181,6 +181,7 @@ type UserBalance struct {
 	BalanceUsdtFloat       float64   `gorm:"type:decimal(65,20);not null"`
 	BalanceKsdtFloat       float64   `gorm:"type:decimal(65,20);not null"`
 	BalanceRawFloat        float64   `gorm:"type:decimal(65,20);not null"`
+	BalanceRawFloatNew     float64   `gorm:"type:decimal(65,20);not null"`
 }
 
 type Withdraw struct {
@@ -1921,6 +1922,7 @@ func (ub UserBalanceRepo) GetUserBalance(ctx context.Context, userId int64) (*bi
 		LocationTotalFloat:     userBalance.LocationTotalFloat,
 		AllFloat:               userBalance.AllFloat,
 		BalanceRawFloat:        userBalance.BalanceRawFloat,
+		BalanceRawFloatNew:     userBalance.BalanceRawFloatNew,
 		BalanceUsdtFloat:       userBalance.BalanceUsdtFloat,
 		BalanceKsdtFloat:       userBalance.BalanceKsdtFloat,
 		AreaTotalFloatThree:    userBalance.AreaTotalFloatThree,
@@ -2533,8 +2535,8 @@ func (ub *UserBalanceRepo) ToAddressAmountRaw(ctx context.Context, userId int64,
 func (ub *UserBalanceRepo) WithdrawISPAY(ctx context.Context, userId int64, amount float64) error {
 	var err error
 	if res := ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=? and balance_raw_float>=?", userId, amount).
-		Updates(map[string]interface{}{"balance_raw_float": gorm.Expr("balance_raw_float - ?", amount)}); 0 == res.RowsAffected || nil != res.Error {
+		Where("user_id=? and balance_raw_float_new>=?", userId, amount).
+		Updates(map[string]interface{}{"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amount)}); 0 == res.RowsAffected || nil != res.Error {
 		return errors.NotFound("user balance err", "user balance error")
 	}
 

@@ -147,6 +147,7 @@ type UserBalance struct {
 	LocationTotalFloat     float64
 	BalanceUsdtFloat       float64
 	BalanceRawFloat        float64
+	BalanceRawFloatNew     float64
 	BalanceKsdtFloat       float64
 }
 
@@ -945,6 +946,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		Seven:             seven,
 		Notice:            notice,
 		Goods:             resGoods,
+		RawNew:            fmt.Sprintf("%.2f", userBalance.BalanceRawFloatNew),
 	}, nil
 }
 
@@ -2793,8 +2795,12 @@ func (uuc *UserUseCase) Withdraw(ctx context.Context, req *v1.WithdrawRequest, u
 	}
 
 	if 2 == req.SendBody.CoinType {
+		return &v1.WithdrawReply{
+			Status: "暂未开放",
+		}, nil
+
 		amountFloat := float64(req.SendBody.Amount)
-		if userBalance.BalanceRawFloat < amountFloat {
+		if userBalance.BalanceRawFloatNew < amountFloat {
 			return &v1.WithdrawReply{
 				Status: "可提余额不足",
 			}, nil
