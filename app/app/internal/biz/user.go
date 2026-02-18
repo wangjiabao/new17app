@@ -871,14 +871,27 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		return nil, err
 	}
 
+	t := time.Date(2026, 2, 18, 14, 0, 0, 0, time.UTC)
 	for _, vBuyRecord := range buyRecord {
 		tmpBuy += vBuyRecord.Amount
 
 		one := vBuyRecord.AmountGet
-		if vBuyRecord.Amount*2.5 <= vBuyRecord.AmountGet {
-			one = vBuyRecord.Amount * 2.5
+		num := 2.5
+		if vBuyRecord.CreatedAt.After(t) {
+			amount := uint64(vBuyRecord.Amount)
+			if 4999 <= amount && 15001 > amount {
+				num = 3
+			} else if 29999 <= amount && 50001 > amount {
+				num = 3.5
+			} else if 99999 <= amount && 150001 > amount {
+				num = 4
+			}
+		}
+
+		if vBuyRecord.Amount*num <= vBuyRecord.AmountGet {
+			one = vBuyRecord.Amount * num
 		} else {
-			tmpSubAmount += vBuyRecord.Amount*2.5 - one
+			tmpSubAmount += vBuyRecord.Amount*num - one
 		}
 
 		tmpAmountGet += one
@@ -1718,9 +1731,26 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 	}
 
 	num := 2.5
+	numStr := "2.5"
+	t := time.Date(2026, 2, 18, 14, 0, 0, 0, time.UTC)
 	for _, vBuyRecord := range buyRecord {
 		tmpAmountGet := vBuyRecord.AmountGet
 		tmpAmountLast := float64(0)
+
+		if vBuyRecord.CreatedAt.After(t) {
+			amount := uint64(vBuyRecord.Amount)
+			if 4999 <= amount && 15001 > amount {
+				num = 3
+				numStr = "3"
+			} else if 29999 <= amount && 50001 > amount {
+				num = 3.5
+				numStr = "3.5"
+			} else if 99999 <= amount && 150001 > amount {
+				num = 4
+				numStr = "4"
+			}
+		}
+
 		if vBuyRecord.AmountGet >= vBuyRecord.Amount*num {
 			tmpAmountGet = vBuyRecord.Amount * num
 		} else {
@@ -1757,7 +1787,7 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 			Status:     uint64(vBuyRecord.Status),
 			AmountGet:  fmt.Sprintf("%.2f", tmpAmountGet),
 			AmountLast: fmt.Sprintf("%.2f", tmpAmountLast),
-			Num:        "2.5",
+			Num:        numStr,
 			One:        oneTmp,
 			Two:        twoTmp,
 			Three:      threeTmp,
