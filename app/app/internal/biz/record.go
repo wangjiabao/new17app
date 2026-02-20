@@ -16,7 +16,7 @@ type EthUserRecord struct {
 	AmountTwo int64
 	CoinType  string
 	RelAmount int64
-	Last      uint64
+	Last      int64
 	CreatedAt time.Time
 }
 

@@ -36,6 +36,20 @@ service App {
 		};
 	};
 
+	rpc BuyTwo (BuyRequest) returns (BuyReply) {
+		option (google.api.http) = {
+			post: "/api/app_server/buy_two"
+			body: "send_body"
+		};
+	};
+
+	rpc BuyThree (BuyRequest) returns (BuyReply) {
+		option (google.api.http) = {
+			post: "/api/app_server/buy_three"
+			body: "send_body"
+		};
+	};
+
 	rpc SetToday (SetTodayRequest) returns (SetTodayReply) {
 		option (google.api.http) = {
 			post: "/api/app_server/set_today"
@@ -294,8 +308,9 @@ message SetTodayReply {
 
 message BuyRequest {
 	message SendBody{
-		uint64 amount = 1;
 		string sign = 4;
+		int64 id = 2;
+		uint64 full = 3;
 	}
 
 	SendBody send_body = 1;
@@ -308,10 +323,8 @@ message BuyReply {
 message AmountToRequest {
 	message SendBody{
 		uint64 amount = 1;
-		string type = 2;
 		string address = 3;
 		string sign = 4;
-		string publicKey = 5;
 	}
 
 	SendBody send_body = 1;
@@ -428,8 +441,7 @@ message UserInfoReply {
 	string teamTwo = 17; // 平级收益
 	string all = 18; // 全网收益
 
-
-
+	string amountUsdt = 210; // 充值usdt余额
 	string usdt = 21; // usdt余额
 	double withdrawRate = 22; // usdt提现手续费
 	double withdrawMin = 23; // usdt最小提现
@@ -457,6 +469,8 @@ message UserInfoReply {
 		uint64 four = 4; // 商品金额
 		string five = 5; // 商品大段描述
 	}
+	repeated List goodsTwo = 49; // ido
+	repeated List goodsThree = 50; // ido
 }
 
 message RewardListRequest {

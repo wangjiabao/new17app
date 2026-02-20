@@ -23,6 +23,8 @@ const (
 	App_UserRecommend_FullMethodName       = "/api.App/UserRecommend"
 	App_UserInfo_FullMethodName            = "/api.App/UserInfo"
 	App_Buy_FullMethodName                 = "/api.App/Buy"
+	App_BuyTwo_FullMethodName              = "/api.App/BuyTwo"
+	App_BuyThree_FullMethodName            = "/api.App/BuyThree"
 	App_SetToday_FullMethodName            = "/api.App/SetToday"
 	App_SetTodayList_FullMethodName        = "/api.App/SetTodayList"
 	App_Withdraw_FullMethodName            = "/api.App/Withdraw"
@@ -61,6 +63,8 @@ type AppClient interface {
 	UserRecommend(ctx context.Context, in *RecommendListRequest, opts ...grpc.CallOption) (*RecommendListReply, error)
 	UserInfo(ctx context.Context, in *UserInfoRequest, opts ...grpc.CallOption) (*UserInfoReply, error)
 	Buy(ctx context.Context, in *BuyRequest, opts ...grpc.CallOption) (*BuyReply, error)
+	BuyTwo(ctx context.Context, in *BuyRequest, opts ...grpc.CallOption) (*BuyReply, error)
+	BuyThree(ctx context.Context, in *BuyRequest, opts ...grpc.CallOption) (*BuyReply, error)
 	SetToday(ctx context.Context, in *SetTodayRequest, opts ...grpc.CallOption) (*SetTodayReply, error)
 	SetTodayList(ctx context.Context, in *SetTodayListRequest, opts ...grpc.CallOption) (*SetTodayListReply, error)
 	Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*WithdrawReply, error)
@@ -154,6 +158,24 @@ func (c *appClient) UserInfo(ctx context.Context, in *UserInfoRequest, opts ...g
 func (c *appClient) Buy(ctx context.Context, in *BuyRequest, opts ...grpc.CallOption) (*BuyReply, error) {
 	out := new(BuyReply)
 	err := c.cc.Invoke(ctx, App_Buy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) BuyTwo(ctx context.Context, in *BuyRequest, opts ...grpc.CallOption) (*BuyReply, error) {
+	out := new(BuyReply)
+	err := c.cc.Invoke(ctx, App_BuyTwo_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) BuyThree(ctx context.Context, in *BuyRequest, opts ...grpc.CallOption) (*BuyReply, error) {
+	out := new(BuyReply)
+	err := c.cc.Invoke(ctx, App_BuyThree_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -420,6 +442,8 @@ type AppServer interface {
 	UserRecommend(context.Context, *RecommendListRequest) (*RecommendListReply, error)
 	UserInfo(context.Context, *UserInfoRequest) (*UserInfoReply, error)
 	Buy(context.Context, *BuyRequest) (*BuyReply, error)
+	BuyTwo(context.Context, *BuyRequest) (*BuyReply, error)
+	BuyThree(context.Context, *BuyRequest) (*BuyReply, error)
 	SetToday(context.Context, *SetTodayRequest) (*SetTodayReply, error)
 	SetTodayList(context.Context, *SetTodayListRequest) (*SetTodayListReply, error)
 	Withdraw(context.Context, *WithdrawRequest) (*WithdrawReply, error)
@@ -491,6 +515,12 @@ func (UnimplementedAppServer) UserInfo(context.Context, *UserInfoRequest) (*User
 }
 func (UnimplementedAppServer) Buy(context.Context, *BuyRequest) (*BuyReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Buy not implemented")
+}
+func (UnimplementedAppServer) BuyTwo(context.Context, *BuyRequest) (*BuyReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BuyTwo not implemented")
+}
+func (UnimplementedAppServer) BuyThree(context.Context, *BuyRequest) (*BuyReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BuyThree not implemented")
 }
 func (UnimplementedAppServer) SetToday(context.Context, *SetTodayRequest) (*SetTodayReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetToday not implemented")
@@ -657,6 +687,42 @@ func _App_Buy_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AppServer).Buy(ctx, req.(*BuyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_BuyTwo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).BuyTwo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_BuyTwo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).BuyTwo(ctx, req.(*BuyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_BuyThree_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).BuyThree(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_BuyThree_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).BuyThree(ctx, req.(*BuyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1187,6 +1253,14 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Buy",
 			Handler:    _App_Buy_Handler,
+		},
+		{
+			MethodName: "BuyTwo",
+			Handler:    _App_BuyTwo_Handler,
+		},
+		{
+			MethodName: "BuyThree",
+			Handler:    _App_BuyThree_Handler,
 		},
 		{
 			MethodName: "SetToday",

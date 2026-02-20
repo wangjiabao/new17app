@@ -150,6 +150,54 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/app_server/buy_three:
+        post:
+            tags:
+                - App
+            operationId: App_BuyThree
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/BuyRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BuyReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/app_server/buy_two:
+        post:
+            tags:
+                - App
+            operationId: App_BuyTwo
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/BuyRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BuyReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/app_server/delete_balance_reward:
         post:
             tags:
@@ -772,13 +820,9 @@ components:
             properties:
                 amount:
                     type: string
-                type:
-                    type: string
                 address:
                     type: string
                 sign:
-                    type: string
-                publicKey:
                     type: string
         BuyReply:
             type: object
@@ -788,9 +832,11 @@ components:
         BuyRequest_SendBody:
             type: object
             properties:
-                amount:
-                    type: string
                 sign:
+                    type: string
+                id:
+                    type: string
+                full:
                     type: string
         DeleteBalanceRewardReply:
             type: object
@@ -1211,6 +1257,8 @@ components:
                     type: string
                 all:
                     type: string
+                amountUsdt:
+                    type: string
                 usdt:
                     type: string
                 withdrawRate:
@@ -1246,6 +1294,14 @@ components:
                 notice:
                     type: string
                 goods:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/UserInfoReply_List'
+                goodsTwo:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/UserInfoReply_List'
+                goodsThree:
                     type: array
                     items:
                         $ref: '#/components/schemas/UserInfoReply_List'

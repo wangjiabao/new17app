@@ -486,90 +486,256 @@ func (a *AppService) Exchange(ctx context.Context, req *v1.ExchangeRequest) (*v1
 	//})
 }
 
-//var lockBuy sync.Mutex
+var lockBuy sync.Mutex
 
 // Buy  buySomething.
 func (a *AppService) Buy(ctx context.Context, req *v1.BuyRequest) (*v1.BuyReply, error) {
-	return nil, nil
 	// 在上下文 context 中取出 claims 对象
-	//lockBuy.Lock()
-	//defer lockBuy.Unlock()
-	//
+	var (
+		err    error
+		userId int64
+	)
+
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.BuyReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		//if c["Password"] == nil {
+		//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
+		//}
+		userId = int64(c["UserId"].(float64))
+		//tokenPassword = c["Password"].(string)
+	}
+
+	var (
+		user *biz.User
+	)
+	user, err = a.uuc.GetUserByUserId(ctx, userId)
+	if nil != err {
+		return &v1.BuyReply{
+			Status: "错误",
+		}, nil
+	}
+
+	if 1 == user.IsDelete {
+		return &v1.BuyReply{
+			Status: "用户已删除",
+		}, nil
+	}
+
+	if 1 == user.Lock {
+		return &v1.BuyReply{
+			Status: "用户已锁定",
+		}, nil
+	}
+
+	lockBuy.Lock()
+	defer lockBuy.Unlock()
+
 	//var (
-	//	//err           error
-	//	userId int64
+	//	address string
+	//	res     bool
 	//)
 	//
-	//if claims, ok := jwt.FromContext(ctx); ok {
-	//	c := claims.(jwt2.MapClaims)
-	//	if c["UserId"] == nil {
-	//		return &v1.BuyReply{
-	//			Status: "无效TOKEN",
-	//		}, nil
-	//	}
-	//	//if c["Password"] == nil {
-	//	//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
-	//	//}
-	//	userId = int64(c["UserId"].(float64))
-	//	//tokenPassword = c["Password"].(string)
+	//res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
+	//if !res || nil != err || 0 >= len(address) || user.Address != address {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
 	//}
-	//
-	//// 验证
+
+	var (
+		res             bool
+		addressFromSign string
+	)
+	if 10 >= len(req.SendBody.Sign) {
+		return &v1.BuyReply{
+			Status: "签名错误",
+		}, nil
+	}
+	res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
+	if !res || addressFromSign != user.Address {
+		return &v1.BuyReply{
+			Status: "签名错误",
+		}, nil
+	}
+
+	//if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
+	//}
+	// TODO 验证签名
+	//password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
+
+	return a.uuc.Buy(ctx, req, user)
+}
+
+var lockBuyTwo sync.Mutex
+
+// BuyTwo  buySomething.
+func (a *AppService) BuyTwo(ctx context.Context, req *v1.BuyRequest) (*v1.BuyReply, error) {
+	// 在上下文 context 中取出 claims 对象
+	var (
+		err    error
+		userId int64
+	)
+
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.BuyReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		//if c["Password"] == nil {
+		//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
+		//}
+		userId = int64(c["UserId"].(float64))
+		//tokenPassword = c["Password"].(string)
+	}
+
+	var (
+		user *biz.User
+	)
+	user, err = a.uuc.GetUserByUserId(ctx, userId)
+	if nil != err {
+		return &v1.BuyReply{
+			Status: "错误",
+		}, nil
+	}
+
+	if 1 == user.IsDelete {
+		return &v1.BuyReply{
+			Status: "用户已删除",
+		}, nil
+	}
+
+	if 1 == user.Lock {
+		return &v1.BuyReply{
+			Status: "用户已锁定",
+		}, nil
+	}
+
+	lockBuyTwo.Lock()
+	defer lockBuyTwo.Unlock()
+
 	//var (
-	//	err error
+	//	address string
+	//	res     bool
 	//)
 	//
+	//res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
+	//if !res || nil != err || 0 >= len(address) || user.Address != address {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
+	//}
+
+	var (
+		res             bool
+		addressFromSign string
+	)
+	if 10 >= len(req.SendBody.Sign) {
+		return &v1.BuyReply{
+			Status: "签名错误",
+		}, nil
+	}
+	res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
+	if !res || addressFromSign != user.Address {
+		return &v1.BuyReply{
+			Status: "签名错误",
+		}, nil
+	}
+
+	//if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
+	//}
+	// TODO 验证签名
+	//password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
+
+	return a.uuc.BuyTwo(ctx, req, user)
+}
+
+var lockBuyThree sync.Mutex
+
+// BuyThree  buySomething.
+func (a *AppService) BuyThree(ctx context.Context, req *v1.BuyRequest) (*v1.BuyReply, error) {
+	// 在上下文 context 中取出 claims 对象
+	var (
+		err    error
+		userId int64
+	)
+
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.BuyReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		//if c["Password"] == nil {
+		//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
+		//}
+		userId = int64(c["UserId"].(float64))
+		//tokenPassword = c["Password"].(string)
+	}
+
+	var (
+		user *biz.User
+	)
+	user, err = a.uuc.GetUserByUserId(ctx, userId)
+	if nil != err {
+		return &v1.BuyReply{
+			Status: "错误",
+		}, nil
+	}
+
+	if 1 == user.IsDelete {
+		return &v1.BuyReply{
+			Status: "用户已删除",
+		}, nil
+	}
+
+	if 1 == user.Lock {
+		return &v1.BuyReply{
+			Status: "用户已锁定",
+		}, nil
+	}
+
+	lockBuyThree.Lock()
+	defer lockBuyThree.Unlock()
+
 	//var (
-	//	user *biz.User
+	//	address string
+	//	res     bool
 	//)
-	//user, err = a.uuc.GetUserByUserId(ctx, userId)
-	//if nil != err {
-	//	return &v1.BuyReply{
-	//		Status: "错误",
-	//	}, nil
+	//
+	//res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
+	//if !res || nil != err || 0 >= len(address) || user.Address != address {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
 	//}
-	//
-	//if 1 == user.IsDelete {
-	//	return &v1.BuyReply{
-	//		Status: "用户已删除",
-	//	}, nil
+
+	var (
+		res             bool
+		addressFromSign string
+	)
+	if 10 >= len(req.SendBody.Sign) {
+		return &v1.BuyReply{
+			Status: "签名错误",
+		}, nil
+	}
+	res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
+	if !res || addressFromSign != user.Address {
+		return &v1.BuyReply{
+			Status: "签名错误",
+		}, nil
+	}
+
+	//if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
 	//}
-	//
-	//if 1 == user.Lock {
-	//	return &v1.BuyReply{
-	//		Status: "用户已锁定",
-	//	}, nil
-	//}
-	//
-	////fmt.Println(user)
-	////res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
-	////if !res || nil != err || 0 >= len(address) || address != user.Address {
-	////	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
-	////}
-	//
-	//var (
-	//	res             bool
-	//	addressFromSign string
-	//)
-	//if 10 >= len(req.SendBody.Sign) {
-	//	return &v1.BuyReply{
-	//		Status: "签名错误",
-	//	}, nil
-	//}
-	//res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
-	//if !res || addressFromSign != user.Address {
-	//	return &v1.BuyReply{
-	//		Status: "签名错误",
-	//	}, nil
-	//}
-	//
-	////if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
-	////	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
-	////}
-	//// TODO 验证签名
-	////password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
-	//
-	//return a.uuc.Buy(ctx, req, user)
+	// TODO 验证签名
+	//password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
+
+	return a.uuc.BuyThree(ctx, req, user)
 }
 
 //var lockSetToday sync.Mutex
@@ -654,83 +820,84 @@ func (a *AppService) SetToday(ctx context.Context, req *v1.SetTodayRequest) (*v1
 
 // AmountTo AmountTo.
 func (a *AppService) AmountTo(ctx context.Context, req *v1.AmountToRequest) (*v1.AmountToReply, error) {
-	return nil, nil
-	//// 在上下文 context 中取出 claims 对象
+	// 在上下文 context 中取出 claims 对象
+	var (
+		err    error
+		userId int64
+	)
+
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.AmountToReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		//if c["Password"] == nil {
+		//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
+		//}
+		userId = int64(c["UserId"].(float64))
+		//tokenPassword = c["Password"].(string)
+	}
+
+	var (
+		user *biz.User
+	)
+	user, err = a.uuc.GetUserByUserId(ctx, userId)
+	if nil != err {
+		return &v1.AmountToReply{
+			Status: "错误",
+		}, nil
+	}
+
+	if 1 == user.IsDelete {
+		return &v1.AmountToReply{
+			Status: "用户已删除",
+		}, nil
+	}
+
+	if 1 == user.Lock {
+		return &v1.AmountToReply{
+			Status: "用户已锁定",
+		}, nil
+	}
+
+	lockBuyThree.Lock()
+	defer lockBuyThree.Unlock()
+
 	//var (
-	//	//err           error
-	//	userId int64
+	//	address string
+	//	res     bool
 	//)
 	//
-	//if claims, ok := jwt.FromContext(ctx); ok {
-	//	c := claims.(jwt2.MapClaims)
-	//	if c["UserId"] == nil {
-	//		return &v1.AmountToReply{
-	//			Status: "无效TOKEN",
-	//		}, nil
-	//	}
-	//	//if c["Password"] == nil {
-	//	//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
-	//	//}
-	//	userId = int64(c["UserId"].(float64))
-	//	//tokenPassword = c["Password"].(string)
+	//res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
+	//if !res || nil != err || 0 >= len(address) || user.Address != address {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
 	//}
-	//
-	//// 验证
-	//var (
-	//	err error
-	//)
-	//
-	//var (
-	//	user *biz.User
-	//)
-	//user, err = a.uuc.GetUserByUserId(ctx, userId)
-	//if nil != err {
-	//	return &v1.AmountToReply{
-	//		Status: "错误",
-	//	}, nil
+
+	var (
+		res             bool
+		addressFromSign string
+	)
+	if 10 >= len(req.SendBody.Sign) {
+		return &v1.AmountToReply{
+			Status: "签名错误",
+		}, nil
+	}
+	res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
+	if !res || addressFromSign != user.Address {
+		return &v1.AmountToReply{
+			Status: "签名错误",
+		}, nil
+	}
+
+	//if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
 	//}
-	//
-	//if 1 == user.IsDelete {
-	//	return &v1.AmountToReply{
-	//		Status: "用户已删除",
-	//	}, nil
-	//}
-	//
-	//if 1 == user.Lock {
-	//	return &v1.AmountToReply{
-	//		Status: "用户已锁定",
-	//	}, nil
-	//}
-	//
-	////fmt.Println(user)
-	////res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
-	////if !res || nil != err || 0 >= len(address) || address != user.Address {
-	////	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
-	////}
-	//
-	//var (
-	//	res             bool
-	//	addressFromSign string
-	//)
-	//if 10 >= len(req.SendBody.Sign) {
-	//	return &v1.AmountToReply{
-	//		Status: "签名错误",
-	//	}, nil
-	//}
-	//res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
-	//if !res || addressFromSign != user.Address {
-	//	return &v1.AmountToReply{
-	//		Status: "签名错误",
-	//	}, nil
-	//}
-	//
-	////if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
-	////	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
-	////}
-	//// TODO 验证签名
-	////password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
-	//
-	//return a.uuc.AmountTo(ctx, req, user)
+	// TODO 验证签名
+	//password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
+
+	return a.uuc.AmountTo(ctx, req, user)
 }
 
 // Stake Stake.
