@@ -1013,7 +1013,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		Notice:            notice,
 		Goods:             resGoods,
 		GoodsTwo:          resGoodsTwo,
-		GoodsThree:        resGoodsTwo,
+		GoodsThree:        resGoodsThree,
 		RawNew:            fmt.Sprintf("%.2f", userBalance.BalanceRawFloatNew),
 	}, nil
 }
