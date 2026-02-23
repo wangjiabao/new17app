@@ -3906,10 +3906,9 @@ func (ub *UserBalanceRepo) GetGoods(ctx context.Context) ([]*biz.Good, error) {
 
 // UpdateUserNewTwoNewTwo .
 func (ui *UserInfoRepo) UpdateUserNewTwoNewTwo(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc, amountIspay float64, one, two, three string, four int64) error {
-	res := ui.data.DB(ctx).Table("user").Where("id=?", userId).Where("amount_usdt>=?", amountRel).
+	res := ui.data.DB(ctx).Table("user").Where("id=?", userId).
 		Updates(map[string]interface{}{
-			"amount":      gorm.Expr("amount + ?", amount),
-			"amount_usdt": gorm.Expr("amount_usdt - ?", amountRel),
+			"amount": gorm.Expr("amount + ?", amount),
 		})
 	if res.Error != nil || 1 != res.RowsAffected {
 		return errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
@@ -3917,8 +3916,11 @@ func (ui *UserInfoRepo) UpdateUserNewTwoNewTwo(ctx context.Context, userId int64
 
 	if 0 < amountRelBrc {
 		res = ui.data.DB(ctx).Table("user_balance").
-			Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).
-			Updates(map[string]interface{}{"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc)})
+			Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).Where("balance_usdt_float>=?", amountRel).
+			Updates(map[string]interface{}{
+				"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc),
+				"balance_usdt_float":    gorm.Expr("balance_usdt_float - ?", amountRel),
+			})
 		if res.Error != nil || 1 != res.RowsAffected {
 			return errors.New(500, "UPDATE_USER_ERROR", "one信息修改失败")
 		}
@@ -3997,21 +3999,14 @@ func (ui *UserInfoRepo) UpdateUserNewTwoNewTwo(ctx context.Context, userId int64
 
 // UpdateUserTwoIn .
 func (ui *UserInfoRepo) UpdateUserTwoIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four int64) error {
-	res := ui.data.DB(ctx).Table("user").Where("id=?", userId).Where("amount_usdt>=?", amountRel).
+	res := ui.data.DB(ctx).Table("user_balance").
+		Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).Where("balance_usdt_float>=?", amountRel).
 		Updates(map[string]interface{}{
-			"amount_usdt": gorm.Expr("amount_usdt - ?", amountRel),
+			"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc),
+			"balance_usdt_float":    gorm.Expr("balance_usdt_float - ?", amountRel),
 		})
 	if res.Error != nil || 1 != res.RowsAffected {
-		return errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
-	}
-
-	if 0 < amountRelBrc {
-		res = ui.data.DB(ctx).Table("user_balance").
-			Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).
-			Updates(map[string]interface{}{"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc)})
-		if res.Error != nil || 1 != res.RowsAffected {
-			return errors.New(500, "UPDATE_USER_ERROR", "one信息修改失败")
-		}
+		return errors.New(500, "UPDATE_USER_ERROR", "one信息修改失败")
 	}
 
 	var buyRecord BuyRecord
@@ -4050,22 +4045,12 @@ func (ui *UserInfoRepo) UpdateUserTwoIn(ctx context.Context, userId int64, amoun
 
 // UpdateUserThreeIn .
 func (ui *UserInfoRepo) UpdateUserThreeIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four int64) error {
-	res := ui.data.DB(ctx).Table("user").Where("id=?", userId).Where("amount_usdt>=?", amountRel).
+	res := ui.data.DB(ctx).Table("user_balance").
+		Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).Where("balance_usdt_float>=?", amountRel).
 		Updates(map[string]interface{}{
-			"amount_usdt": gorm.Expr("amount_usdt - ?", amountRel),
+			"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc),
+			"balance_usdt_float":    gorm.Expr("balance_usdt_float - ?", amountRel),
 		})
-	if res.Error != nil || 1 != res.RowsAffected {
-		return errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
-	}
-
-	if 0 < amountRelBrc {
-		res = ui.data.DB(ctx).Table("user_balance").
-			Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).
-			Updates(map[string]interface{}{"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc)})
-		if res.Error != nil || 1 != res.RowsAffected {
-			return errors.New(500, "UPDATE_USER_ERROR", "one信息修改失败")
-		}
-	}
 
 	var buyRecord BuyRecord
 	buyRecord.UserId = userId

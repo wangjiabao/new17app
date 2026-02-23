@@ -996,7 +996,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		Team:              fmt.Sprintf("%.2f", userBalance.AreaTotalFloat),
 		TeamTwo:           fmt.Sprintf("%.2f", userBalance.AreaTotalFloatTwo),
 		All:               fmt.Sprintf("%.2f", userBalance.AllFloat),
-		AmountUsdt:        fmt.Sprintf("%.2f", myUser.AmountUsdt),
+		AmountUsdt:        fmt.Sprintf("%.2f", userBalance.BalanceUsdtFloat),
 		Usdt:              fmt.Sprintf("%.2f", userBalance.BalanceUsdtFloat),
 		WithdrawRate:      withdrawRate,
 		WithdrawMin:       withdrawMin,
@@ -2193,9 +2193,9 @@ func (uuc *UserUseCase) Buy(ctx context.Context, req *v1.BuyRequest, user *User)
 		}, nil
 	}
 
-	if 1 < amountRel && amountRel > user.AmountUsdt {
+	if 1 < amountRel && amountRel > userBalance.BalanceUsdtFloat {
 		return &v1.BuyReply{
-			Status: "充值usdt余额不足|deposit usdt not enough",
+			Status: "usdt余额不足|deposit usdt not enough",
 		}, nil
 	}
 
@@ -2593,9 +2593,9 @@ func (uuc *UserUseCase) BuyTwo(ctx context.Context, req *v1.BuyRequest, user *Us
 		}, nil
 	}
 
-	if 1 < amountRel && amountRel > user.AmountUsdt {
+	if 1 < amountRel && amountRel > userBalance.BalanceUsdtFloat {
 		return &v1.BuyReply{
-			Status: "充值usdt余额不足|deposit usdt not enough",
+			Status: "usdt余额不足|deposit usdt not enough",
 		}, nil
 	}
 
@@ -2757,9 +2757,9 @@ func (uuc *UserUseCase) BuyThree(ctx context.Context, req *v1.BuyRequest, user *
 		}, nil
 	}
 
-	if 1 < amountRel && amountRel > user.AmountUsdt {
+	if 1 < amountRel && amountRel > userBalance.BalanceUsdtFloat {
 		return &v1.BuyReply{
-			Status: "充值usdt余额不足|deposit usdt not enough",
+			Status: "usdt余额不足|deposit usdt not enough",
 		}, nil
 	}
 
