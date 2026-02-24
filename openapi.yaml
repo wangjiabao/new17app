@@ -198,6 +198,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/app_server/delete_address:
+        post:
+            tags:
+                - App
+            operationId: App_DeleteAddress
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeleteAddressRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteAddressReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/app_server/delete_balance_reward:
         post:
             tags:
@@ -336,6 +360,60 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/app_server/order_three_list:
+        get:
+            tags:
+                - App
+            operationId: App_OrderThreeList
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: string
+                - name: orderType
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OrderTwoListReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/app_server/order_two_list:
+        get:
+            tags:
+                - App
+            operationId: App_OrderTwoList
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: string
+                - name: orderType
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OrderTwoListReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/app_server/password_change:
         post:
             tags:
@@ -447,6 +525,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/RewardListReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/app_server/set_address:
+        post:
+            tags:
+                - App
+            operationId: App_SetAddress
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SetAddressRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SetAddressReply'
                 default:
                     description: Default error response
                     content:
@@ -838,6 +940,20 @@ components:
                     type: string
                 full:
                     type: string
+                addressId:
+                    type: string
+        DeleteAddressReply:
+            type: object
+            properties:
+                status:
+                    type: string
+        DeleteAddressRequest_SendBody:
+            type: object
+            properties:
+                id:
+                    type: string
+                sign:
+                    type: string
         DeleteBalanceRewardReply:
             type: object
             properties:
@@ -959,6 +1075,46 @@ components:
                     type: string
                 six:
                     type: string
+        OrderTwoListReply:
+            type: object
+            properties:
+                count:
+                    type: string
+                status:
+                    type: string
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/OrderTwoListReply_List'
+        OrderTwoListReply_List:
+            type: object
+            properties:
+                createdAt:
+                    type: string
+                amount:
+                    type: string
+                country:
+                    type: string
+                province:
+                    type: string
+                city:
+                    type: string
+                area:
+                    type: string
+                detail:
+                    type: string
+                name:
+                    type: string
+                phone:
+                    type: string
+                four:
+                    type: string
+                five:
+                    type: string
+                six:
+                    type: string
+                orderType:
+                    type: string
         PasswordChangeReply:
             type: object
             properties:
@@ -1042,6 +1198,30 @@ components:
                 address:
                     type: string
                 num:
+                    type: string
+        SetAddressReply:
+            type: object
+            properties:
+                status:
+                    type: string
+        SetAddressRequest_SendBody:
+            type: object
+            properties:
+                sign:
+                    type: string
+                country:
+                    type: string
+                province:
+                    type: string
+                city:
+                    type: string
+                area:
+                    type: string
+                detail:
+                    type: string
+                name:
+                    type: string
+                phone:
                     type: string
         SetBalanceRewardReply:
             type: object
@@ -1305,6 +1485,10 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/UserInfoReply_List'
+                userAddress:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/UserInfoReply_ListAddress'
         UserInfoReply_List:
             type: object
             properties:
@@ -1319,6 +1503,23 @@ components:
                 four:
                     type: string
                 five:
+                    type: string
+        UserInfoReply_ListAddress:
+            type: object
+            properties:
+                id:
+                    type: string
+                city:
+                    type: string
+                country:
+                    type: string
+                province:
+                    type: string
+                detail:
+                    type: string
+                name:
+                    type: string
+                phone:
                     type: string
         WithdrawListReply:
             type: object

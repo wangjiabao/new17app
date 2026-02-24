@@ -83,6 +83,21 @@ type UserInfo struct {
 	TeamCsdBalance   int64
 }
 
+type UserAddress struct {
+	ID        uint64
+	Country   string
+	City      string
+	Area      string
+	Detail    string
+	Phone     string
+	Province  string
+	Name      string
+	UserId    uint64
+	Status    uint64
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type UserRecommend struct {
 	ID            int64
 	UserId        int64
@@ -364,6 +379,12 @@ type UserBalanceRepo interface {
 	GetGoodsThree(ctx context.Context) ([]*Good, error)
 	GetAllUsersB(ctx context.Context) ([]*User, error)
 	GetGoodsAll(ctx context.Context) ([]*Good, error)
+	GetGoodsAllTwo(ctx context.Context) ([]*Good, error)
+	GetGoodsAllThree(ctx context.Context) ([]*Good, error)
+	GetUserAddress(ctx context.Context, userId uint64) ([]*UserAddress, error)
+	GetUserAddressAll(ctx context.Context, userId uint64) ([]*UserAddress, error)
+	CreateUserAddress(ctx context.Context, rel *UserAddress) (*UserAddress, error)
+	DeleteAddress(ctx context.Context, id, userId int64) error
 
 	SetBalanceReward(ctx context.Context, userId int64, amount int64) error
 	UpdateBalanceReward(ctx context.Context, userId int64, id int64, amount int64, status int64) error
@@ -407,8 +428,8 @@ type UserInfoRepo interface {
 	UpdateUserRewardRecommendBrc(ctx context.Context, userId int64, raw float64, address string) error
 	CreateEthUserRecordListByHash(ctx context.Context, r *EthUserRecord) (*EthUserRecord, error)
 	UpdateUserNewTwoNewTwo(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc, amountIspay float64, one, two, three string, four int64) error
-	UpdateUserTwoIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four int64) error
-	UpdateUserThreeIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four int64) error
+	UpdateUserTwoIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four, addressId int64) error
+	UpdateUserThreeIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four, addressId int64) error
 	CreateUserInfo(ctx context.Context, u *User) (*UserInfo, error)
 	GetUserInfoByUserId(ctx context.Context, userId int64) (*UserInfo, error)
 	UpdateUserInfo(ctx context.Context, u *UserInfo) (*UserInfo, error)
@@ -432,6 +453,8 @@ type UserRepo interface {
 	UpdateUserRewardAreaTwo(ctx context.Context, userId int64, amountUsdt float64, amountUsdtTotal float64, stop bool, level, i int64, address string) (int64, error)
 	GetUserById(ctx context.Context, Id int64) (*User, error)
 	GetBuyRecord(ctx context.Context, userId uint64, b *Pagination) ([]*BuyRecord, int64, error)
+	GetBuyRecordTwo(ctx context.Context, userId, status uint64, b *Pagination) ([]*BuyRecord, int64, error)
+	GetBuyRecordThree(ctx context.Context, userId, status uint64, b *Pagination) ([]*BuyRecord, int64, error)
 	GetBuyRecordDoing(userId uint64) ([]*BuyRecord, error)
 	GetUserByAddresses(ctx context.Context, Addresses ...string) (map[string]*User, error)
 	GetUserByAddress(ctx context.Context, address string) (*User, error)
@@ -675,6 +698,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		goods                 []*Good
 		goodsTwo              []*Good
 		goodsThree            []*Good
+		userAddress           []*UserAddress
 	)
 
 	// 配置
@@ -779,6 +803,24 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 			Three: v.Two,
 			Four:  v.Amount,
 			Five:  v.Three,
+		})
+	}
+
+	userAddress, err = uuc.ubRepo.GetUserAddress(ctx, uint64(user.ID))
+	if nil != err {
+		return nil, err
+	}
+	resUserAddress := make([]*v1.UserInfoReply_ListAddress, 0)
+
+	for _, v := range userAddress {
+		resUserAddress = append(resUserAddress, &v1.UserInfoReply_ListAddress{
+			Id:       v.ID,
+			City:     v.City,
+			Country:  v.Country,
+			Province: v.Province,
+			Detail:   v.Detail,
+			Name:     v.Name,
+			Phone:    v.Phone,
 		})
 	}
 
@@ -1014,6 +1056,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 		Goods:             resGoods,
 		GoodsTwo:          resGoodsTwo,
 		GoodsThree:        resGoodsThree,
+		UserAddress:       resUserAddress,
 		RawNew:            fmt.Sprintf("%.2f", userBalance.BalanceRawFloatNew),
 	}, nil
 }
@@ -1859,6 +1902,200 @@ func (uuc *UserUseCase) OrderList(ctx context.Context, req *v1.OrderListRequest,
 	}, nil
 }
 
+func (uuc *UserUseCase) OrderTwoList(ctx context.Context, req *v1.OrderTwoListRequest, user *User) (*v1.OrderTwoListReply, error) {
+	res := make([]*v1.OrderTwoListReply_List, 0)
+
+	var (
+		myUser         *User
+		buyRecord      []*BuyRecord
+		goods          []*Good
+		goodsMap       map[int64]*Good
+		userAddress    []*UserAddress
+		userAddressMap map[uint64]*UserAddress
+		count          int64
+		err            error
+	)
+	myUser, err = uuc.repo.GetUserById(ctx, user.ID)
+	if nil != err {
+		return nil, err
+	}
+
+	buyRecord, count, err = uuc.repo.GetBuyRecordTwo(ctx, uint64(myUser.ID), req.OrderType, &Pagination{PageNum: int(req.Page), PageSize: 20})
+	if nil != err {
+		return &v1.OrderTwoListReply{
+			Status: "err",
+			Count:  0,
+			List:   res,
+		}, nil
+	}
+
+	goods, err = uuc.ubRepo.GetGoodsAllTwo(ctx)
+	if nil != err {
+		return nil, err
+	}
+	goodsMap = make(map[int64]*Good, 0)
+	for _, v := range goods {
+		goodsMap[v.ID] = v
+	}
+
+	userAddress, err = uuc.ubRepo.GetUserAddressAll(ctx, uint64(user.ID))
+	if nil != err {
+		return nil, err
+	}
+	for _, v := range userAddress {
+		userAddressMap[v.ID] = v
+	}
+
+	for _, vBuyRecord := range buyRecord {
+		fourTmp := ""
+		fiveTmp := ""
+		sixTmp := ""
+		if 0 != vBuyRecord.Four {
+			if _, ok := goodsMap[vBuyRecord.Four]; ok {
+				fourTmp = goodsMap[vBuyRecord.Four].Name
+				fiveTmp = goodsMap[vBuyRecord.Four].One
+				sixTmp = goodsMap[vBuyRecord.Four].Two
+			}
+		}
+
+		c := ""
+		p := ""
+		cc := ""
+		ar := ""
+		d := ""
+		n := ""
+		pp := ""
+		if _, ok := userAddressMap[uint64(vBuyRecord.LastUpdated)]; ok {
+			c = userAddressMap[uint64(vBuyRecord.LastUpdated)].Country
+			p = userAddressMap[uint64(vBuyRecord.LastUpdated)].Province
+			cc = userAddressMap[uint64(vBuyRecord.LastUpdated)].City
+			ar = userAddressMap[uint64(vBuyRecord.LastUpdated)].Area
+			d = userAddressMap[uint64(vBuyRecord.LastUpdated)].Detail
+			n = userAddressMap[uint64(vBuyRecord.LastUpdated)].Name
+			pp = userAddressMap[uint64(vBuyRecord.LastUpdated)].Phone
+		}
+
+		res = append(res, &v1.OrderTwoListReply_List{
+			CreatedAt: vBuyRecord.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Amount:    fmt.Sprintf("%.2f", vBuyRecord.Amount),
+			Country:   c,
+			Province:  p,
+			City:      cc,
+			Area:      ar,
+			Detail:    d,
+			Name:      n,
+			Phone:     pp,
+			Four:      fourTmp,
+			Five:      fiveTmp,
+			Six:       sixTmp,
+			OrderType: uint64(vBuyRecord.Status),
+		})
+	}
+
+	return &v1.OrderTwoListReply{
+		Status: "ok",
+		Count:  uint64(count),
+		List:   res,
+	}, nil
+}
+
+func (uuc *UserUseCase) OrderThreeList(ctx context.Context, req *v1.OrderTwoListRequest, user *User) (*v1.OrderTwoListReply, error) {
+	res := make([]*v1.OrderTwoListReply_List, 0)
+
+	var (
+		myUser         *User
+		buyRecord      []*BuyRecord
+		goods          []*Good
+		goodsMap       map[int64]*Good
+		userAddress    []*UserAddress
+		userAddressMap map[uint64]*UserAddress
+		count          int64
+		err            error
+	)
+	myUser, err = uuc.repo.GetUserById(ctx, user.ID)
+	if nil != err {
+		return nil, err
+	}
+
+	buyRecord, count, err = uuc.repo.GetBuyRecordThree(ctx, uint64(myUser.ID), req.OrderType, &Pagination{PageNum: int(req.Page), PageSize: 20})
+	if nil != err {
+		return &v1.OrderTwoListReply{
+			Status: "err",
+			Count:  0,
+			List:   res,
+		}, nil
+	}
+
+	goods, err = uuc.ubRepo.GetGoodsAllThree(ctx)
+	if nil != err {
+		return nil, err
+	}
+	goodsMap = make(map[int64]*Good, 0)
+	for _, v := range goods {
+		goodsMap[v.ID] = v
+	}
+
+	userAddress, err = uuc.ubRepo.GetUserAddressAll(ctx, uint64(user.ID))
+	if nil != err {
+		return nil, err
+	}
+	for _, v := range userAddress {
+		userAddressMap[v.ID] = v
+	}
+
+	for _, vBuyRecord := range buyRecord {
+		fourTmp := ""
+		fiveTmp := ""
+		sixTmp := ""
+		if 0 != vBuyRecord.Four {
+			if _, ok := goodsMap[vBuyRecord.Four]; ok {
+				fourTmp = goodsMap[vBuyRecord.Four].Name
+				fiveTmp = goodsMap[vBuyRecord.Four].One
+				sixTmp = goodsMap[vBuyRecord.Four].Two
+			}
+		}
+
+		c := ""
+		p := ""
+		cc := ""
+		ar := ""
+		d := ""
+		n := ""
+		pp := ""
+		if _, ok := userAddressMap[uint64(vBuyRecord.LastUpdated)]; ok {
+			c = userAddressMap[uint64(vBuyRecord.LastUpdated)].Country
+			p = userAddressMap[uint64(vBuyRecord.LastUpdated)].Province
+			cc = userAddressMap[uint64(vBuyRecord.LastUpdated)].City
+			ar = userAddressMap[uint64(vBuyRecord.LastUpdated)].Area
+			d = userAddressMap[uint64(vBuyRecord.LastUpdated)].Detail
+			n = userAddressMap[uint64(vBuyRecord.LastUpdated)].Name
+			pp = userAddressMap[uint64(vBuyRecord.LastUpdated)].Phone
+		}
+
+		res = append(res, &v1.OrderTwoListReply_List{
+			CreatedAt: vBuyRecord.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Amount:    fmt.Sprintf("%.2f", vBuyRecord.Amount),
+			Country:   c,
+			Province:  p,
+			City:      cc,
+			Area:      ar,
+			Detail:    d,
+			Name:      n,
+			Phone:     pp,
+			Four:      fourTmp,
+			Five:      fiveTmp,
+			Six:       sixTmp,
+			OrderType: uint64(vBuyRecord.Status),
+		})
+	}
+
+	return &v1.OrderTwoListReply{
+		Status: "ok",
+		Count:  uint64(count),
+		List:   res,
+	}, nil
+}
+
 func (uuc *UserUseCase) TradeList(ctx context.Context, user *User) (*v1.TradeListReply, error) {
 
 	var (
@@ -2627,7 +2864,7 @@ func (uuc *UserUseCase) BuyTwo(ctx context.Context, req *v1.BuyRequest, user *Us
 	four := goodsBuy.ID
 	// 入金
 	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
-		err = uuc.uiRepo.UpdateUserTwoIn(ctx, user.ID, amount, amountRel, amountRelBrc, one, two, three, four)
+		err = uuc.uiRepo.UpdateUserTwoIn(ctx, user.ID, amount, amountRel, amountRelBrc, one, two, three, four, int64(req.SendBody.AddressId))
 		if nil != err {
 			return err
 		}
@@ -2791,7 +3028,7 @@ func (uuc *UserUseCase) BuyThree(ctx context.Context, req *v1.BuyRequest, user *
 	four := goodsBuy.ID
 	// 入金
 	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
-		err = uuc.uiRepo.UpdateUserThreeIn(ctx, user.ID, amount, amountRel, amountRelBrc, one, two, three, four)
+		err = uuc.uiRepo.UpdateUserThreeIn(ctx, user.ID, amount, amountRel, amountRelBrc, one, two, three, four, int64(req.SendBody.AddressId))
 		if nil != err {
 			return err
 		}
@@ -2841,6 +3078,57 @@ func (uuc *UserUseCase) BuyThree(ctx context.Context, req *v1.BuyRequest, user *
 	}
 
 	return &v1.BuyReply{
+		Status: "ok",
+	}, nil
+}
+
+func (uuc *UserUseCase) SetAddress(ctx context.Context, req *v1.SetAddressRequest, user *User) (*v1.SetAddressReply, error) {
+	var (
+		err         error
+		userAddress []*UserAddress
+	)
+
+	userAddress, err = uuc.ubRepo.GetUserAddressAll(ctx, uint64(user.ID))
+	if nil != err {
+		return nil, err
+	}
+	if len(userAddress) > 20 {
+		return &v1.SetAddressReply{
+			Status: "联系管理员",
+		}, nil
+	}
+
+	_, err = uuc.ubRepo.CreateUserAddress(ctx, &UserAddress{
+		Country:  req.SendBody.Country,
+		City:     req.SendBody.City,
+		Area:     req.SendBody.Area,
+		Detail:   req.SendBody.Detail,
+		Phone:    req.SendBody.Phone,
+		Province: req.SendBody.Province,
+		Name:     req.SendBody.Name,
+		UserId:   uint64(user.ID),
+		Status:   1,
+	})
+	if nil != err {
+		return nil, err
+	}
+
+	return &v1.SetAddressReply{
+		Status: "ok",
+	}, nil
+}
+
+func (uuc *UserUseCase) DeleteAddress(ctx context.Context, req *v1.DeleteAddressRequest, user *User) (*v1.DeleteAddressReply, error) {
+	var (
+		err error
+	)
+
+	err = uuc.ubRepo.DeleteAddress(ctx, req.SendBody.Id, user.ID)
+	if nil != err {
+		return nil, err
+	}
+
+	return &v1.DeleteAddressReply{
 		Status: "ok",
 	}, nil
 }

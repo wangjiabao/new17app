@@ -256,6 +256,21 @@ type Reward struct {
 	AmountNewTwo     float64   `gorm:"type:decimal(65,20);not null"`
 }
 
+type UserAddress struct {
+	ID        uint64    `gorm:"primarykey;type:int unsigned;autoIncrement"`
+	Country   string    `gorm:"type:varchar(100);not null;default:''"`
+	City      string    `gorm:"type:varchar(200);not null;default:''"`
+	Area      string    `gorm:"type:varchar(200);not null;default:''"`
+	Detail    string    `gorm:"type:varchar(200);not null;default:''"`
+	Phone     string    `gorm:"type:varchar(100);not null;default:''"`
+	UserId    uint64    `gorm:"type:int;not null"`
+	Status    uint64    `gorm:"type:int;not null"`
+	Province  string    `gorm:"type:varchar(100);not null;default:''"`
+	Name      string    `gorm:"type:varchar(100);not null;default:''"`
+	CreatedAt time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt time.Time `gorm:"type:datetime;not null"`
+}
+
 type UserRepo struct {
 	data *Data
 	log  *log.Helper
@@ -785,6 +800,94 @@ func (u *UserRepo) UpdateUserRewardAreaTwo(ctx context.Context, userId int64, am
 	}
 
 	return userBalanceRecode.ID, nil
+}
+
+// GetBuyRecordTwo .
+func (u *UserRepo) GetBuyRecordTwo(ctx context.Context, userId, status uint64, b *biz.Pagination) ([]*biz.BuyRecord, int64, error) {
+	res := make([]*biz.BuyRecord, 0)
+
+	var (
+		buyRecord []*BuyRecord
+		count     int64
+	)
+	instance := u.data.db.Table("buy_record_two").Where("user_id=?", userId)
+
+	if 0 < status {
+		instance = instance.Where("status=?", status)
+	}
+
+	instance = instance.Count(&count)
+
+	if err := instance.Order("id desc").Scopes(Paginate(b.PageNum, b.PageSize)).Find(&buyRecord).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, 0, nil
+		}
+
+		return nil, 0, errors.New(500, "buy_record ERROR", err.Error())
+	}
+
+	for _, v := range buyRecord {
+		res = append(res, &biz.BuyRecord{
+			ID:          v.ID,
+			UserId:      v.UserId,
+			Status:      v.Status,
+			Amount:      v.Amount,
+			AmountGet:   v.AmountGet,
+			CreatedAt:   v.CreatedAt,
+			UpdatedAt:   v.UpdatedAt,
+			LastUpdated: v.LastUpdated,
+			One:         v.One,
+			Two:         v.Two,
+			Three:       v.Three,
+			Four:        v.Four,
+		})
+	}
+
+	return res, count, nil
+}
+
+// GetBuyRecordThree .
+func (u *UserRepo) GetBuyRecordThree(ctx context.Context, userId, status uint64, b *biz.Pagination) ([]*biz.BuyRecord, int64, error) {
+	res := make([]*biz.BuyRecord, 0)
+
+	var (
+		buyRecord []*BuyRecord
+		count     int64
+	)
+	instance := u.data.db.Table("buy_record_three").Where("user_id=?", userId)
+
+	if 0 < status {
+		instance = instance.Where("status=?", status)
+	}
+
+	instance = instance.Count(&count)
+
+	if err := instance.Order("id desc").Scopes(Paginate(b.PageNum, b.PageSize)).Find(&buyRecord).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, 0, nil
+		}
+
+		return nil, 0, errors.New(500, "buy_record ERROR", err.Error())
+	}
+
+	for _, v := range buyRecord {
+		res = append(res, &biz.BuyRecord{
+			ID:          v.ID,
+			UserId:      v.UserId,
+			Status:      v.Status,
+			Amount:      v.Amount,
+			AmountGet:   v.AmountGet,
+			CreatedAt:   v.CreatedAt,
+			UpdatedAt:   v.UpdatedAt,
+			LastUpdated: v.LastUpdated,
+			One:         v.One,
+			Two:         v.Two,
+			Three:       v.Three,
+			Four:        v.Four,
+		})
+	}
+
+	return res, count, nil
 }
 
 // GetBuyRecord .
@@ -3998,7 +4101,7 @@ func (ui *UserInfoRepo) UpdateUserNewTwoNewTwo(ctx context.Context, userId int64
 }
 
 // UpdateUserTwoIn .
-func (ui *UserInfoRepo) UpdateUserTwoIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four int64) error {
+func (ui *UserInfoRepo) UpdateUserTwoIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four, addressId int64) error {
 	res := ui.data.DB(ctx).Table("user_balance").
 		Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).Where("balance_usdt_float>=?", amountRel).
 		Updates(map[string]interface{}{
@@ -4014,7 +4117,7 @@ func (ui *UserInfoRepo) UpdateUserTwoIn(ctx context.Context, userId int64, amoun
 	buyRecord.Amount = float64(amount)
 	buyRecord.AmountGet = 0
 	buyRecord.Status = 1
-	buyRecord.LastUpdated = time.Now().UTC().Unix()
+	buyRecord.LastUpdated = addressId
 	buyRecord.One = one
 	buyRecord.Two = two
 	buyRecord.Three = three
@@ -4044,7 +4147,7 @@ func (ui *UserInfoRepo) UpdateUserTwoIn(ctx context.Context, userId int64, amoun
 }
 
 // UpdateUserThreeIn .
-func (ui *UserInfoRepo) UpdateUserThreeIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four int64) error {
+func (ui *UserInfoRepo) UpdateUserThreeIn(ctx context.Context, userId int64, amount uint64, amountRel, amountRelBrc float64, one, two, three string, four, addressId int64) error {
 	res := ui.data.DB(ctx).Table("user_balance").
 		Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).Where("balance_usdt_float>=?", amountRel).
 		Updates(map[string]interface{}{
@@ -4057,7 +4160,7 @@ func (ui *UserInfoRepo) UpdateUserThreeIn(ctx context.Context, userId int64, amo
 	buyRecord.Amount = float64(amount)
 	buyRecord.AmountGet = 0
 	buyRecord.Status = 1
-	buyRecord.LastUpdated = time.Now().UTC().Unix()
+	buyRecord.LastUpdated = addressId
 	buyRecord.One = one
 	buyRecord.Two = two
 	buyRecord.Three = three
@@ -4449,11 +4552,165 @@ func (ub *UserBalanceRepo) GetGoodsThree(ctx context.Context) ([]*biz.Good, erro
 	return res, nil
 }
 
+// CreateUserAddress .
+func (ub *UserBalanceRepo) CreateUserAddress(ctx context.Context, rel *biz.UserAddress) (*biz.UserAddress, error) {
+	var address UserAddress
+
+	address.Country = rel.Country
+	address.City = rel.City
+	address.Area = rel.Area
+	address.Detail = rel.Detail
+	address.Phone = rel.Phone
+	address.Name = rel.Name
+	address.UserId = rel.UserId
+	address.Status = 1
+	address.CreatedAt = time.Now()
+	address.UpdatedAt = time.Now()
+
+	res := ub.data.DB(ctx).Table("user_address").Create(&address)
+	if res.Error != nil {
+		return nil, errors.New(500, "CREATE_USER_ADDRESS_ERROR", "用户地址创建失败")
+	}
+
+	return &biz.UserAddress{
+		ID:        address.ID,
+		Country:   address.Country,
+		City:      address.City,
+		Area:      address.Area,
+		Detail:    address.Detail,
+		Phone:     address.Phone,
+		Name:      address.Name,
+		CreatedAt: address.CreatedAt,
+		UpdatedAt: address.UpdatedAt,
+	}, nil
+}
+
+// DeleteAddress .
+func (ub *UserBalanceRepo) DeleteAddress(ctx context.Context, id, userId int64) error {
+	if res := ub.data.DB(ctx).Table("user_address").
+		Where("id=? and user_id=?", id, userId).
+		Updates(map[string]interface{}{"status": 0}); 0 == res.RowsAffected || nil != res.Error {
+		return errors.NotFound("user address err", "user address error")
+	}
+
+	return nil
+}
+
+// GetUserAddress .
+func (ub *UserBalanceRepo) GetUserAddress(ctx context.Context, userId uint64) ([]*biz.UserAddress, error) {
+	var goods []*UserAddress
+	res := make([]*biz.UserAddress, 0)
+	if err := ub.data.db.Table("user_address").Where("user_id=?", userId).Where("status=?", 1).Find(&goods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("GOOD_NOT_FOUND", "good not found")
+		}
+
+		return nil, errors.New(500, "Good ERROR", err.Error())
+	}
+	for _, good := range goods {
+		res = append(res, &biz.UserAddress{
+			ID:        good.ID,
+			Country:   good.Country,
+			City:      good.City,
+			Area:      good.Area,
+			Detail:    good.Detail,
+			Phone:     good.Phone,
+			Province:  good.Province,
+			Name:      good.Name,
+			UserId:    good.UserId,
+			Status:    good.Status,
+			CreatedAt: good.CreatedAt,
+			UpdatedAt: good.UpdatedAt,
+		})
+	}
+
+	return res, nil
+}
+
+// GetUserAddressAll .
+func (ub *UserBalanceRepo) GetUserAddressAll(ctx context.Context, userId uint64) ([]*biz.UserAddress, error) {
+	var goods []*UserAddress
+	res := make([]*biz.UserAddress, 0)
+	if err := ub.data.db.Table("user_address").Where("user_id=?", userId).Find(&goods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("GOOD_NOT_FOUND", "good not found")
+		}
+
+		return nil, errors.New(500, "Good ERROR", err.Error())
+	}
+	for _, good := range goods {
+		res = append(res, &biz.UserAddress{
+			ID:        good.ID,
+			Country:   good.Country,
+			City:      good.City,
+			Area:      good.Area,
+			Detail:    good.Detail,
+			Phone:     good.Phone,
+			Province:  good.Province,
+			Name:      good.Name,
+			UserId:    good.UserId,
+			Status:    good.Status,
+			CreatedAt: good.CreatedAt,
+			UpdatedAt: good.UpdatedAt,
+		})
+	}
+
+	return res, nil
+}
+
 // GetGoodsAll .
 func (ub *UserBalanceRepo) GetGoodsAll(ctx context.Context) ([]*biz.Good, error) {
 	var goods []*Good
 	res := make([]*biz.Good, 0)
 	if err := ub.data.db.Table("good").Find(&goods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("GOOD_NOT_FOUND", "good not found")
+		}
+
+		return nil, errors.New(500, "Good ERROR", err.Error())
+	}
+	for _, good := range goods {
+		res = append(res, &biz.Good{
+			ID:     good.ID,
+			Amount: good.Amount,
+			Name:   good.Name,
+			One:    good.One,
+			Two:    good.Two,
+		})
+	}
+
+	return res, nil
+}
+
+// GetGoodsAllTwo .
+func (ub *UserBalanceRepo) GetGoodsAllTwo(ctx context.Context) ([]*biz.Good, error) {
+	var goods []*Good
+	res := make([]*biz.Good, 0)
+	if err := ub.data.db.Table("good_two").Find(&goods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("GOOD_NOT_FOUND", "good not found")
+		}
+
+		return nil, errors.New(500, "Good ERROR", err.Error())
+	}
+	for _, good := range goods {
+		res = append(res, &biz.Good{
+			ID:     good.ID,
+			Amount: good.Amount,
+			Name:   good.Name,
+			One:    good.One,
+			Two:    good.Two,
+		})
+	}
+
+	return res, nil
+}
+
+// GetGoodsAllThree .
+func (ub *UserBalanceRepo) GetGoodsAllThree(ctx context.Context) ([]*biz.Good, error) {
+	var goods []*Good
+	res := make([]*biz.Good, 0)
+	if err := ub.data.db.Table("good_three").Find(&goods).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return res, errors.NotFound("GOOD_NOT_FOUND", "good not found")
 		}

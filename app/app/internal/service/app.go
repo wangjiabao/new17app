@@ -365,6 +365,42 @@ func (a *AppService) OrderList(ctx context.Context, req *v1.OrderListRequest) (*
 	})
 }
 
+func (a *AppService) OrderTwoList(ctx context.Context, req *v1.OrderTwoListRequest) (*v1.OrderTwoListReply, error) {
+	// 在上下文 context 中取出 claims 对象
+	var userId int64
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.OrderTwoListReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		userId = int64(c["UserId"].(float64))
+	}
+
+	return a.uuc.OrderTwoList(ctx, req, &biz.User{
+		ID: userId,
+	})
+}
+
+func (a *AppService) OrderThreeList(ctx context.Context, req *v1.OrderTwoListRequest) (*v1.OrderTwoListReply, error) {
+	// 在上下文 context 中取出 claims 对象
+	var userId int64
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.OrderTwoListReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		userId = int64(c["UserId"].(float64))
+	}
+
+	return a.uuc.OrderThreeList(ctx, req, &biz.User{
+		ID: userId,
+	})
+}
+
 func (a *AppService) etTodayList(ctx context.Context, req *v1.WithdrawListRequest) (*v1.WithdrawListReply, error) {
 	return nil, nil
 }
@@ -736,6 +772,170 @@ func (a *AppService) BuyThree(ctx context.Context, req *v1.BuyRequest) (*v1.BuyR
 	//password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
 
 	return a.uuc.BuyThree(ctx, req, user)
+}
+
+// SetAddress  setAddress.
+func (a *AppService) SetAddress(ctx context.Context, req *v1.SetAddressRequest) (*v1.SetAddressReply, error) {
+	// 在上下文 context 中取出 claims 对象
+	var (
+		err    error
+		userId int64
+	)
+
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.SetAddressReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		//if c["Password"] == nil {
+		//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
+		//}
+		userId = int64(c["UserId"].(float64))
+		//tokenPassword = c["Password"].(string)
+	}
+
+	var (
+		user *biz.User
+	)
+	user, err = a.uuc.GetUserByUserId(ctx, userId)
+	if nil != err {
+		return &v1.SetAddressReply{
+			Status: "错误",
+		}, nil
+	}
+
+	if 1 == user.IsDelete {
+		return &v1.SetAddressReply{
+			Status: "用户已删除",
+		}, nil
+	}
+
+	if 1 == user.Lock {
+		return &v1.SetAddressReply{
+			Status: "用户已锁定",
+		}, nil
+	}
+
+	lockBuyThree.Lock()
+	defer lockBuyThree.Unlock()
+
+	//var (
+	//	address string
+	//	res     bool
+	//)
+	//
+	//res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
+	//if !res || nil != err || 0 >= len(address) || user.Address != address {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
+	//}
+
+	var (
+		res             bool
+		addressFromSign string
+	)
+	if 10 >= len(req.SendBody.Sign) {
+		return &v1.SetAddressReply{
+			Status: "签名错误",
+		}, nil
+	}
+	res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
+	if !res || addressFromSign != user.Address {
+		return &v1.SetAddressReply{
+			Status: "签名错误",
+		}, nil
+	}
+
+	//if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
+	//}
+	// TODO 验证签名
+	//password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
+
+	return a.uuc.SetAddress(ctx, req, user)
+}
+
+// DeleteAddress  deleteAddress.
+func (a *AppService) DeleteAddress(ctx context.Context, req *v1.DeleteAddressRequest) (*v1.DeleteAddressReply, error) {
+	// 在上下文 context 中取出 claims 对象
+	var (
+		err    error
+		userId int64
+	)
+
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.DeleteAddressReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		//if c["Password"] == nil {
+		//	return nil, errors.New(403, "ERROR_TOKEN", "无效TOKEN")
+		//}
+		userId = int64(c["UserId"].(float64))
+		//tokenPassword = c["Password"].(string)
+	}
+
+	var (
+		user *biz.User
+	)
+	user, err = a.uuc.GetUserByUserId(ctx, userId)
+	if nil != err {
+		return &v1.DeleteAddressReply{
+			Status: "错误",
+		}, nil
+	}
+
+	if 1 == user.IsDelete {
+		return &v1.DeleteAddressReply{
+			Status: "用户已删除",
+		}, nil
+	}
+
+	if 1 == user.Lock {
+		return &v1.DeleteAddressReply{
+			Status: "用户已锁定",
+		}, nil
+	}
+
+	lockBuyThree.Lock()
+	defer lockBuyThree.Unlock()
+
+	//var (
+	//	address string
+	//	res     bool
+	//)
+	//
+	//res, address, err = verifySig2(req.SendBody.Sign, req.SendBody.PublicKey, "login")
+	//if !res || nil != err || 0 >= len(address) || user.Address != address {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "地址签名错误")
+	//}
+
+	var (
+		res             bool
+		addressFromSign string
+	)
+	if 10 >= len(req.SendBody.Sign) {
+		return &v1.DeleteAddressReply{
+			Status: "签名错误",
+		}, nil
+	}
+	res, addressFromSign = verifySig(req.SendBody.Sign, []byte(user.Address))
+	if !res || addressFromSign != user.Address {
+		return &v1.DeleteAddressReply{
+			Status: "签名错误",
+		}, nil
+	}
+
+	//if "" == req.SendBody.Password || 6 > len(req.SendBody.Password) {
+	//	return nil, errors.New(500, "AUTHORIZE_ERROR", "账户密码必须大于6位")
+	//}
+	// TODO 验证签名
+	//password := fmt.Sprintf("%x", md5.Sum([]byte(req.SendBody.Password)))
+
+	return a.uuc.DeleteAddress(ctx, req, user)
 }
 
 //var lockSetToday sync.Mutex
