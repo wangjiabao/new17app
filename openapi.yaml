@@ -1191,6 +1191,8 @@ components:
             properties:
                 createdAt:
                     type: string
+                name:
+                    type: string
                 amount:
                     type: string
                 amountTwo:

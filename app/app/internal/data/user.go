@@ -4072,8 +4072,8 @@ func (ui *UserInfoRepo) UpdateUserNewTwoNewTwo(ctx context.Context, userId int64
 	)
 
 	reward.UserId = userId
-	reward.AmountNew = float64(amount)
-	reward.AmountNewTwo = float64(amount)
+	reward.AmountNew = amountRel
+	reward.AmountNewTwo = amountRelBrc
 	reward.Type = "USDT"  // 本次分红的行为类型
 	reward.Reason = "buy" // 给我分红的理由
 	res = ui.data.DB(ctx).Table("reward").Create(&reward)

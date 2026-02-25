@@ -1578,6 +1578,10 @@ func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListReques
 		reason = "all"
 	} else if 8 == req.ReqType {
 		reason = "send"
+	} else if 9 == req.ReqType {
+		reason = "buy_two"
+	} else if 10 == req.ReqType {
+		reason = "buy_three"
 	}
 
 	userRewards, err, count = uuc.ubRepo.GetUserRewardByUserIdPage(ctx, &Pagination{
@@ -1592,13 +1596,25 @@ func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListReques
 		}, err
 	}
 
+	t := time.Date(2026, 2, 18, 14, 0, 0, 0, time.UTC)
 	for _, vUserReward := range userRewards {
+		name := "ispay"
+		tmpAmountTwo := fmt.Sprintf("%.4f", vUserReward.AmountNewTwo)
+		if vUserReward.CreatedAt.After(t) {
+			name = "brc20"
+		} else {
+			if 1 == req.ReqType {
+				tmpAmountTwo = "0"
+			}
+		}
+
 		res = append(res, &v1.RewardListReply_List{
 			CreatedAt: vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Amount:    fmt.Sprintf("%.4f", vUserReward.AmountNew),
 			Address:   vUserReward.Address,
-			AmountTwo: fmt.Sprintf("%.4f", vUserReward.AmountNewTwo),
+			AmountTwo: tmpAmountTwo,
 			Num:       uint64(vUserReward.TypeRecordId),
+			Name:      name,
 		})
 	}
 

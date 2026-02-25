@@ -548,7 +548,7 @@ message UserInfoReply {
 
 message RewardListRequest {
 	uint64 page = 1; // 页数
-	uint64 reqType = 2; // 类型：1认购，2静态收益，3直推收益，4直推加速收益，5团代收益，6平级收益，7全网收益，8赠送ispay
+	uint64 reqType = 2; // 类型：1认购，9医疗商品认购，10web3认购，2静态收益，3直推收益，4直推加速收益，5团代收益，6平级收益，7全网收益，8赠送ispay
 }
 
 message RewardListReply {
@@ -557,6 +557,7 @@ message RewardListReply {
 	repeated List list = 1;
 	message List {
 		string createdAt = 1; // 时间
+		string name = 6; // 名字
 		string amount = 2; // 数量usdt 1-7 需要展示
 		string amountTwo = 3; // 数量ispay 2-8需要展示
 		string address = 4; // 下级地址 3-6需要展示
