@@ -4017,16 +4017,14 @@ func (ui *UserInfoRepo) UpdateUserNewTwoNewTwo(ctx context.Context, userId int64
 		return errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
 	}
 
-	if 0 < amountRelBrc {
-		res = ui.data.DB(ctx).Table("user_balance").
-			Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).Where("balance_usdt_float>=?", amountRel).
-			Updates(map[string]interface{}{
-				"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc),
-				"balance_usdt_float":    gorm.Expr("balance_usdt_float - ?", amountRel),
-			})
-		if res.Error != nil || 1 != res.RowsAffected {
-			return errors.New(500, "UPDATE_USER_ERROR", "one信息修改失败")
-		}
+	res = ui.data.DB(ctx).Table("user_balance").
+		Where("user_id=?", userId).Where("balance_raw_float_new>=?", amountRelBrc).Where("balance_usdt_float>=?", amountRel).
+		Updates(map[string]interface{}{
+			"balance_raw_float_new": gorm.Expr("balance_raw_float_new - ?", amountRelBrc),
+			"balance_usdt_float":    gorm.Expr("balance_usdt_float - ?", amountRel),
+		})
+	if res.Error != nil || 1 != res.RowsAffected {
+		return errors.New(500, "UPDATE_USER_ERROR", "one信息修改失败")
 	}
 
 	if 0 < amountIspay {
