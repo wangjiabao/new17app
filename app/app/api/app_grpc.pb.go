@@ -36,6 +36,7 @@ const (
 	App_OrderTwoList_FullMethodName        = "/api.App/OrderTwoList"
 	App_OrderThreeList_FullMethodName      = "/api.App/OrderThreeList"
 	App_RewardList_FullMethodName          = "/api.App/RewardList"
+	App_DepositList_FullMethodName         = "/api.App/DepositList"
 	App_RecommendUpdate_FullMethodName     = "/api.App/RecommendUpdate"
 	App_UserArea_FullMethodName            = "/api.App/UserArea"
 	App_RecommendRewardList_FullMethodName = "/api.App/RecommendRewardList"
@@ -82,6 +83,8 @@ type AppClient interface {
 	OrderThreeList(ctx context.Context, in *OrderTwoListRequest, opts ...grpc.CallOption) (*OrderTwoListReply, error)
 	// 交易明细
 	RewardList(ctx context.Context, in *RewardListRequest, opts ...grpc.CallOption) (*RewardListReply, error)
+	// 交易明细
+	DepositList(ctx context.Context, in *DepositListRequest, opts ...grpc.CallOption) (*DepositListReply, error)
 	RecommendUpdate(ctx context.Context, in *RecommendUpdateRequest, opts ...grpc.CallOption) (*RecommendUpdateReply, error)
 	UserArea(ctx context.Context, in *UserAreaRequest, opts ...grpc.CallOption) (*UserAreaReply, error)
 	RecommendRewardList(ctx context.Context, in *RecommendRewardListRequest, opts ...grpc.CallOption) (*RecommendRewardListReply, error)
@@ -283,6 +286,15 @@ func (c *appClient) OrderThreeList(ctx context.Context, in *OrderTwoListRequest,
 func (c *appClient) RewardList(ctx context.Context, in *RewardListRequest, opts ...grpc.CallOption) (*RewardListReply, error) {
 	out := new(RewardListReply)
 	err := c.cc.Invoke(ctx, App_RewardList_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) DepositList(ctx context.Context, in *DepositListRequest, opts ...grpc.CallOption) (*DepositListReply, error) {
+	out := new(DepositListReply)
+	err := c.cc.Invoke(ctx, App_DepositList_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -501,6 +513,8 @@ type AppServer interface {
 	OrderThreeList(context.Context, *OrderTwoListRequest) (*OrderTwoListReply, error)
 	// 交易明细
 	RewardList(context.Context, *RewardListRequest) (*RewardListReply, error)
+	// 交易明细
+	DepositList(context.Context, *DepositListRequest) (*DepositListReply, error)
 	RecommendUpdate(context.Context, *RecommendUpdateRequest) (*RecommendUpdateReply, error)
 	UserArea(context.Context, *UserAreaRequest) (*UserAreaReply, error)
 	RecommendRewardList(context.Context, *RecommendRewardListRequest) (*RecommendRewardListReply, error)
@@ -602,6 +616,9 @@ func (UnimplementedAppServer) OrderThreeList(context.Context, *OrderTwoListReque
 }
 func (UnimplementedAppServer) RewardList(context.Context, *RewardListRequest) (*RewardListReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RewardList not implemented")
+}
+func (UnimplementedAppServer) DepositList(context.Context, *DepositListRequest) (*DepositListReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DepositList not implemented")
 }
 func (UnimplementedAppServer) RecommendUpdate(context.Context, *RecommendUpdateRequest) (*RecommendUpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecommendUpdate not implemented")
@@ -981,6 +998,24 @@ func _App_RewardList_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AppServer).RewardList(ctx, req.(*RewardListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_DepositList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DepositListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).DepositList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_DepositList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).DepositList(ctx, req.(*DepositListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1437,6 +1472,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RewardList",
 			Handler:    _App_RewardList_Handler,
+		},
+		{
+			MethodName: "DepositList",
+			Handler:    _App_DepositList_Handler,
 		},
 		{
 			MethodName: "RecommendUpdate",

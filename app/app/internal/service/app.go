@@ -279,6 +279,24 @@ func (a *AppService) RewardList(ctx context.Context, req *v1.RewardListRequest) 
 	})
 }
 
+func (a *AppService) DepositList(ctx context.Context, req *v1.DepositListRequest) (*v1.DepositListReply, error) {
+	// 在上下文 context 中取出 claims 对象
+	var userId int64
+	if claims, ok := jwt.FromContext(ctx); ok {
+		c := claims.(jwt2.MapClaims)
+		if c["UserId"] == nil {
+			return &v1.DepositListReply{
+				Status: "无效TOKEN",
+			}, nil
+		}
+		userId = int64(c["UserId"].(float64))
+	}
+
+	return a.uuc.DepositList(ctx, req, &biz.User{
+		ID: userId,
+	})
+}
+
 func (a *AppService) RecommendRewardList(ctx context.Context, req *v1.RecommendRewardListRequest) (*v1.RecommendRewardListReply, error) {
 	// 在上下文 context 中取出 claims 对象
 	var userId int64

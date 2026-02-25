@@ -439,7 +439,7 @@ type UserInfoRepo interface {
 type UserRepo interface {
 	GetAllUsersOrderAmountBiw(ctx context.Context) ([]*User, error)
 	GetAllUsersRecommendOrder(ctx context.Context) ([]*User, error)
-	GetEthUserRecordListByUserId(ctx context.Context, userId int64) ([]*EthUserRecord, error)
+	GetEthUserRecordListByUserId(ctx context.Context, userId int64, b *Pagination) ([]*EthUserRecord, int64, error)
 	InRecordNew(ctx context.Context, userId int64, address string, amount int64, coinType string) error
 	UpdateUserNewTwoNew(ctx context.Context, userId int64, amount uint64, amountUsdt float64, last uint64) error
 	UpdateUserMyTotalAmount(ctx context.Context, userId int64, amountUsdt float64) error
@@ -1550,6 +1550,40 @@ func (uuc *UserUseCase) UserInfoOld(ctx context.Context, user *User) (*v1.UserIn
 	//}, nil
 	return nil, nil
 
+}
+
+func (uuc *UserUseCase) DepositList(ctx context.Context, req *v1.DepositListRequest, user *User) (*v1.DepositListReply, error) {
+	res := make([]*v1.DepositListReply_List, 0)
+	var (
+		ethUR []*EthUserRecord
+		count int64
+		err   error
+	)
+
+	ethUR, count, err = uuc.repo.GetEthUserRecordListByUserId(ctx, user.ID, &Pagination{
+		PageNum:  int(req.Page),
+		PageSize: 20,
+	})
+	if nil != err {
+		return &v1.DepositListReply{
+			Status: "ok",
+			Count:  uint64(count),
+			List:   res,
+		}, err
+	}
+
+	for _, v := range ethUR {
+		res = append(res, &v1.DepositListReply_List{
+			CreatedAt: v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Amount:    fmt.Sprintf("%.4f", v.AmountTwo),
+		})
+	}
+
+	return &v1.DepositListReply{
+		Status: "ok",
+		Count:  uint64(count),
+		List:   res,
+	}, nil
 }
 
 func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListRequest, user *User) (*v1.RewardListReply, error) {

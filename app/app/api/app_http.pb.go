@@ -29,6 +29,7 @@ const OperationAppBuyTwo = "/api.App/BuyTwo"
 const OperationAppDeleteAddress = "/api.App/DeleteAddress"
 const OperationAppDeleteBalanceReward = "/api.App/DeleteBalanceReward"
 const OperationAppDeposit = "/api.App/Deposit"
+const OperationAppDepositList = "/api.App/DepositList"
 const OperationAppEthAuthorize = "/api.App/EthAuthorize"
 const OperationAppExchange = "/api.App/Exchange"
 const OperationAppFeeRewardList = "/api.App/FeeRewardList"
@@ -94,6 +95,8 @@ type AppHTTPServer interface {
 	DeleteAddress(context.Context, *DeleteAddressRequest) (*DeleteAddressReply, error)
 	DeleteBalanceReward(context.Context, *DeleteBalanceRewardRequest) (*DeleteBalanceRewardReply, error)
 	Deposit(context.Context, *DepositRequest) (*DepositReply, error)
+	// DepositList 交易明细
+	DepositList(context.Context, *DepositListRequest) (*DepositListReply, error)
 	EthAuthorize(context.Context, *EthAuthorizeRequest) (*EthAuthorizeReply, error)
 	Exchange(context.Context, *ExchangeRequest) (*ExchangeReply, error)
 	FeeRewardList(context.Context, *FeeRewardListRequest) (*FeeRewardListReply, error)
@@ -145,6 +148,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.GET("/api/app_server/order_two_list", _App_OrderTwoList0_HTTP_Handler(srv))
 	r.GET("/api/app_server/order_three_list", _App_OrderThreeList0_HTTP_Handler(srv))
 	r.GET("/api/app_server/reward_list", _App_RewardList0_HTTP_Handler(srv))
+	r.GET("/api/app_server/deposit_list", _App_DepositList0_HTTP_Handler(srv))
 	r.POST("/api/app_server/recommend_update", _App_RecommendUpdate0_HTTP_Handler(srv))
 	r.GET("/api/app_server/user_area", _App_UserArea0_HTTP_Handler(srv))
 	r.GET("/api/app_server/recommend_reward_list", _App_RecommendRewardList0_HTTP_Handler(srv))
@@ -514,6 +518,25 @@ func _App_RewardList0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) err
 			return err
 		}
 		reply := out.(*RewardListReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _App_DepositList0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in DepositListRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppDepositList)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.DepositList(ctx, req.(*DepositListRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*DepositListReply)
 		return ctx.Result(200, reply)
 	}
 }
@@ -961,6 +984,7 @@ type AppHTTPClient interface {
 	DeleteAddress(ctx context.Context, req *DeleteAddressRequest, opts ...http.CallOption) (rsp *DeleteAddressReply, err error)
 	DeleteBalanceReward(ctx context.Context, req *DeleteBalanceRewardRequest, opts ...http.CallOption) (rsp *DeleteBalanceRewardReply, err error)
 	Deposit(ctx context.Context, req *DepositRequest, opts ...http.CallOption) (rsp *DepositReply, err error)
+	DepositList(ctx context.Context, req *DepositListRequest, opts ...http.CallOption) (rsp *DepositListReply, err error)
 	EthAuthorize(ctx context.Context, req *EthAuthorizeRequest, opts ...http.CallOption) (rsp *EthAuthorizeReply, err error)
 	Exchange(ctx context.Context, req *ExchangeRequest, opts ...http.CallOption) (rsp *ExchangeReply, err error)
 	FeeRewardList(ctx context.Context, req *FeeRewardListRequest, opts ...http.CallOption) (rsp *FeeRewardListReply, err error)
@@ -1121,6 +1145,19 @@ func (c *AppHTTPClientImpl) Deposit(ctx context.Context, in *DepositRequest, opt
 	pattern := "/api/admin_dhb/deposit"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAppDeposit))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) DepositList(ctx context.Context, in *DepositListRequest, opts ...http.CallOption) (*DepositListReply, error) {
+	var out DepositListReply
+	pattern := "/api/app_server/deposit_list"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAppDepositList))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

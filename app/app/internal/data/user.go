@@ -1031,16 +1031,22 @@ func (u *UserRepo) UpdateUserNewTwoNew(ctx context.Context, userId int64, amount
 	return nil
 }
 
-func (u *UserRepo) GetEthUserRecordListByUserId(ctx context.Context, userId int64) ([]*biz.EthUserRecord, error) {
-	var ethUserRecord []*EthUserRecord
+func (u *UserRepo) GetEthUserRecordListByUserId(ctx context.Context, userId int64, b *biz.Pagination) ([]*biz.EthUserRecord, int64, error) {
+	var (
+		count         int64
+		ethUserRecord []*EthUserRecord
+	)
+
+	instance := u.data.DB(ctx).Table("eth_user_record").Where("user_id=?", userId)
+	instance = instance.Count(&count)
 
 	res := make([]*biz.EthUserRecord, 0)
-	if err := u.data.DB(ctx).Table("eth_user_record").Where("user_id=?", userId).Find(&ethUserRecord).Error; err != nil {
+	if err := instance.Scopes(Paginate(b.PageNum, b.PageSize)).Order("id desc").Find(&ethUserRecord).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return res, errors.NotFound("USER_RECOMMEND_NOT_FOUND", "user recommend not found")
+			return res, 0, errors.NotFound("USER_RECOMMEND_NOT_FOUND", "user recommend not found")
 		}
 
-		return nil, errors.New(500, "USER RECOMMEND ERROR", err.Error())
+		return nil, 0, errors.New(500, "USER RECOMMEND ERROR", err.Error())
 	}
 
 	for _, item := range ethUserRecord {
@@ -1057,7 +1063,7 @@ func (u *UserRepo) GetEthUserRecordListByUserId(ctx context.Context, userId int6
 		})
 	}
 
-	return res, nil
+	return res, count, nil
 }
 
 // GetStakeByUserId .

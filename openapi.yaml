@@ -246,6 +246,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/app_server/deposit_list:
+        get:
+            tags:
+                - App
+            description: 交易明细
+            operationId: App_DepositList
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DepositListReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/app_server/eth_authorize:
         post:
             tags:
@@ -962,6 +986,24 @@ components:
         DeleteBalanceRewardRequest_SendBody:
             type: object
             properties:
+                amount:
+                    type: string
+        DepositListReply:
+            type: object
+            properties:
+                status:
+                    type: string
+                count:
+                    type: string
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/DepositListReply_List'
+        DepositListReply_List:
+            type: object
+            properties:
+                createdAt:
+                    type: string
                 amount:
                     type: string
         DepositReply:
