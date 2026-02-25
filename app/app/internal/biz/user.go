@@ -818,6 +818,7 @@ func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoR
 			City:     v.City,
 			Country:  v.Country,
 			Province: v.Province,
+			Area:     v.Area,
 			Detail:   v.Detail,
 			Name:     v.Name,
 			Phone:    v.Phone,
@@ -1938,6 +1939,7 @@ func (uuc *UserUseCase) OrderTwoList(ctx context.Context, req *v1.OrderTwoListRe
 		goodsMap[v.ID] = v
 	}
 
+	userAddressMap = make(map[uint64]*UserAddress, 0)
 	userAddress, err = uuc.ubRepo.GetUserAddressAll(ctx, uint64(user.ID))
 	if nil != err {
 		return nil, err
@@ -2035,6 +2037,7 @@ func (uuc *UserUseCase) OrderThreeList(ctx context.Context, req *v1.OrderTwoList
 		goodsMap[v.ID] = v
 	}
 
+	userAddressMap = make(map[uint64]*UserAddress, 0)
 	userAddress, err = uuc.ubRepo.GetUserAddressAll(ctx, uint64(user.ID))
 	if nil != err {
 		return nil, err

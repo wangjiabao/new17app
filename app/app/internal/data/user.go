@@ -4563,6 +4563,7 @@ func (ub *UserBalanceRepo) CreateUserAddress(ctx context.Context, rel *biz.UserA
 	address.Phone = rel.Phone
 	address.Name = rel.Name
 	address.UserId = rel.UserId
+	address.Province = rel.Province
 	address.Status = 1
 	address.CreatedAt = time.Now()
 	address.UpdatedAt = time.Now()

@@ -539,6 +539,7 @@ message UserInfoReply {
 		string city = 1; // 城市
 		string country = 2; // 国家
 		string province = 3; // 省份
+		string area = 8;
 		string detail = 7; // 详情
 		string name = 4; // 收件人
 		string phone = 5; // 手机

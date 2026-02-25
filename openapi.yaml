@@ -1515,6 +1515,8 @@ components:
                     type: string
                 province:
                     type: string
+                area:
+                    type: string
                 detail:
                     type: string
                 name:
