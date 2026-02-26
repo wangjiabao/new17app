@@ -1575,7 +1575,7 @@ func (uuc *UserUseCase) DepositList(ctx context.Context, req *v1.DepositListRequ
 	for _, v := range ethUR {
 		res = append(res, &v1.DepositListReply_List{
 			CreatedAt: v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-			Amount:    fmt.Sprintf("%.4f", v.AmountTwo),
+			Amount:    strconv.FormatInt(v.AmountTwo, 10),
 		})
 	}
 
@@ -2820,7 +2820,7 @@ func (uuc *UserUseCase) BuyTwo(ctx context.Context, req *v1.BuyRequest, user *Us
 
 	// 配置
 	configs, err = uuc.configRepo.GetConfigByKeys(ctx,
-		"good_two_rate",
+		"good_three_rate",
 		"price_brc",
 	)
 	if nil != err || nil == configs {
@@ -2831,7 +2831,7 @@ func (uuc *UserUseCase) BuyTwo(ctx context.Context, req *v1.BuyRequest, user *Us
 
 	for _, vConfig := range configs {
 
-		if "good_two_rate" == vConfig.KeyName {
+		if "good_three_rate" == vConfig.KeyName {
 			goodRate, _ = strconv.ParseFloat(vConfig.Value, 10)
 		}
 		if "price_brc" == vConfig.KeyName {
