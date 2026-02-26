@@ -2645,6 +2645,10 @@ func (uuc *UserUseCase) Buy(ctx context.Context, req *v1.BuyRequest, user *User)
 			continue
 		}
 
+		if 1 == usersMap[tmpUserId].Lock {
+			continue
+		}
+
 		tmpMax := uint64(0)
 		tmpAreaMin := uint64(0)
 		for _, vV := range myLowUser[tmpUserId] {
