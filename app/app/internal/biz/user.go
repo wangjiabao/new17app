@@ -2747,11 +2747,11 @@ func (uuc *UserUseCase) Buy(ctx context.Context, req *v1.BuyRequest, user *User)
 							return err
 						}
 
-						err = uuc.uiRepo.UpdateUserRewardRecommendBrc(ctx, tmpUserId, float64(amount)*sendRecommendRate, user.Address)
-						if err != nil {
-							fmt.Println("错误分红直推：", err)
-							return err
-						}
+						//err = uuc.uiRepo.UpdateUserRewardRecommendBrc(ctx, tmpUserId, float64(amount)*sendRecommendRate, user.Address)
+						//if err != nil {
+						//	fmt.Println("错误分红直推：", err)
+						//	return err
+						//}
 
 						return nil
 					}); nil != err {
