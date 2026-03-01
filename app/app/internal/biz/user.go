@@ -2334,15 +2334,15 @@ func (uuc *UserUseCase) Buy(ctx context.Context, req *v1.BuyRequest, user *User)
 
 	// 推荐人
 	var (
-		err               error
-		configs           []*Config
-		recommend         float64
-		uRate             float64
-		bRate             float64
-		sendRate          float64
-		sendRecommendRate float64
-		goodRate          float64
-		priceBrc          float64
+		err       error
+		configs   []*Config
+		recommend float64
+		uRate     float64
+		bRate     float64
+		sendRate  float64
+		//sendRecommendRate float64
+		goodRate float64
+		priceBrc float64
 	)
 
 	// 配置
@@ -2380,9 +2380,9 @@ func (uuc *UserUseCase) Buy(ctx context.Context, req *v1.BuyRequest, user *User)
 		if "send_rate" == vConfig.KeyName {
 			sendRate, _ = strconv.ParseFloat(vConfig.Value, 10)
 		}
-		if "buy_recommend_rate" == vConfig.KeyName {
-			sendRecommendRate, _ = strconv.ParseFloat(vConfig.Value, 10)
-		}
+		//if "buy_recommend_rate" == vConfig.KeyName {
+		//	sendRecommendRate, _ = strconv.ParseFloat(vConfig.Value, 10)
+		//}
 	}
 
 	var (
